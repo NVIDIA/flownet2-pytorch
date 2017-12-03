@@ -1,0 +1,7 @@
+*.pyc
+.torch
+_ext
+*.o
+work
+work/*
+_ext/
