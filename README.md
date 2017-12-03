@@ -1,8 +1,8 @@
 # flownet2-pytorch 
 
-Pytorch implementation of [FlowNet2](https://arxiv.org/abs/1612.01925) by [Fitsum Reda] (https://github.com/fitsumreda).
+Pytorch implementation of [FlowNet2](https://arxiv.org/abs/1612.01925) by [Fitsum Reda](https://github.com/fitsumreda).
 
-Multiple GPU training is supported, and the code provides examples for training or inference on [MPI-Sintel] (http://sintel.is.tue.mpg.de/) clean and final datasets. The same commands can be used for training or inference with other datasets. See below for more detail.
+Multiple GPU training is supported, and the code provides examples for training or inference on [MPI-Sintel](http://sintel.is.tue.mpg.de/) clean and final datasets. The same commands can be used for training or inference with other datasets. See below for more detail.
 
 Inference using fp16 (half-precision) is also supported.
 
@@ -38,7 +38,7 @@ L1 and L2 losses with multi-scale support are available in [losses.py](./losses.
 ## Installation 
 
     # get flownet2-pytorch source
-    git clone ssh://git@yagr.nvidia.com:2200/freda/flownet2-pytorch.git
+    git clone git@github.com:NVIDIA/flownet2-pytorch.git
     cd flownet2-pytorch
 
     # install custom layers
