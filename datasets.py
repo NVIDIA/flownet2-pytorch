@@ -111,7 +111,7 @@ class MpiSintelFinal(MpiSintel):
         super(MpiSintelFinal, self).__init__(args, is_cropped = is_cropped, root = root, dstype = 'final', replicates = replicates)
 
 class FlyingChairs(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/projects.cdr/flyingchairs/FlyingChairs_release/data', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/FlyingChairs_release/data', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -172,7 +172,7 @@ class FlyingChairs(data.Dataset):
     return self.size * self.replicates
 
 class FlyingThings(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/projects.cdr/flyingthings3d', dstype = 'frames_cleanpass', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/flyingthings3d', dstype = 'frames_cleanpass', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -247,7 +247,7 @@ class FlyingThingsFinal(FlyingThings):
         super(FlyingThingsFinal, self).__init__(args, is_cropped = is_cropped, root = root, dstype = 'frames_finalpass', replicates = replicates)
 
 class ChairsSDHom(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/adlr.cosmos83/atao/data/opensource/chairssdhom/data', dstype = 'train', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/chairssdhom/data', dstype = 'train', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -316,7 +316,7 @@ class ChairsSDHomTest(ChairsSDHom):
         super(ChairsSDHomTest, self).__init__(args, is_cropped = is_cropped, root = root, dstype = 'test', replicates = replicates)
 
 class ImagesFromFolder(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/scratch.freda_adlr/data/video_frame_prediction/SunTemple/clip0/frames', iext = 'png', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/frames/only/folder', iext = 'png', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -363,43 +363,3 @@ class ImagesFromFolder(data.Dataset):
     return self.size * self.replicates
 
 
-'''
-import argparse
-import sys, os
-import numpy as np 
-from scipy.misc import imread, imsave
-from utils import flow_utils 
-
-import datasets
-reload(datasets)
-
-parser = argparse.ArgumentParser()
-args = parser.parse_args()
-args.inference_size = [-1, -1]
-args.crop_size = [256, 256]
-args.sequence_length = 2
-
-validation_dataset = datasets.ImagesFromFolder(args, False, root='/home/scratch.freda_adlr/data/video_frame_prediction/SunTemple/clip0/frames')
-a, b = validation_dataset[100]
-
-# validation_dataset = datasets.FlyingThingsClean(args, False, root='/home/projects.cdr/flyingthings3d')
-# a, b = validation_dataset[100]
-
-# validation_dataset = datasets.ChairsSDHomTest(args, False, root='/home/adlr.cosmos83/atao/data/opensource/chairssdhom/data')
-# a, b = validation_dataset[100]
-
-# validation_dataset = datasets.ChairsSDHomTrain(args, False, root='/home/adlr.cosmos83/atao/data/opensource/chairssdhom/data')
-# a, b = validation_dataset[100]
-
-# validation_dataset = datasets.FlyingChairs(args, False, root='/home/projects.cdr/flyingchairs/FlyingChairs_release/data')
-# a, b = validation_dataset[0]
-
-im1 = a[0][:,0,:,:].permute(1,2,0).numpy().astype(np.uint8)
-im2 = a[0][:,1,:,:].permute(1,2,0).numpy().astype(np.uint8)
-imsave('./im1.png', im1)
-imsave('./im2.png', im2)
-
-flow = b[0].permute(1,2,0).numpy()
-flow_utils.writeFlow('./flow.flo', flow)
-
-'''
