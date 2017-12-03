@@ -111,7 +111,7 @@ class MpiSintelFinal(MpiSintel):
         super(MpiSintelFinal, self).__init__(args, is_cropped = is_cropped, root = root, dstype = 'final', replicates = replicates)
 
 class FlyingChairs(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/projects.cdr/flyingchairs/FlyingChairs_release/data', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/images/and/flows/folder', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -172,7 +172,7 @@ class FlyingChairs(data.Dataset):
     return self.size * self.replicates
 
 class FlyingThings(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/projects.cdr/flyingthings3d', dstype = 'frames_cleanpass', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/root/of/flyingthings3d', dstype = 'frames_cleanpass', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -247,7 +247,7 @@ class FlyingThingsFinal(FlyingThings):
         super(FlyingThingsFinal, self).__init__(args, is_cropped = is_cropped, root = root, dstype = 'frames_finalpass', replicates = replicates)
 
 class ChairsSDHom(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/adlr.cosmos83/atao/data/opensource/chairssdhom/data', dstype = 'train', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/chairssdhom/data', dstype = 'train', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -316,7 +316,7 @@ class ChairsSDHomTest(ChairsSDHom):
         super(ChairsSDHomTest, self).__init__(args, is_cropped = is_cropped, root = root, dstype = 'test', replicates = replicates)
 
 class ImagesFromFolder(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/home/scratch.freda_adlr/data/video_frame_prediction/SunTemple/clip0/frames', iext = 'png', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/frames/only/folder', iext = 'png', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
