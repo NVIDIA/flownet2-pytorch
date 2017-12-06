@@ -74,3 +74,5 @@ A Dockerfile with the above dependencies is available
 ## Results on MPI-Sintel
 [![Predicted flows on MPI-Sintel](./image.png)](https://www.youtube.com/watch?v=HtBmabY8aeU "Predicted flows on MPI-Sintel")
 
+## Acknowledgments
+The Flownet-S model in this project was derived from [ClementPinard/FlowNetPytorch](https://github.com/ClementPinard/FlowNetPytorch).
