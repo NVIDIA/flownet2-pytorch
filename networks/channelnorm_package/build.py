@@ -2,29 +2,29 @@ import os
 import torch
 import torch.utils.ffi
 
-strBasepath = os.path.split(os.path.abspath(__file__))[0] + '/'
-strHeaders = []
-strSources = []
-strDefines = []
-strObjects = []
+this_folder = os.path.dirname(os.path.abspath(__file__)) + '/'
+
+Headers = []
+Sources = []
+Defines = []
+Objects = []
 
 if torch.cuda.is_available() == True:
-    strHeaders += ['src/ChannelNorm_cuda.h']
-    strSources += ['src/ChannelNorm_cuda.c']
-    strDefines += [('WITH_CUDA', None)]
-    strObjects += ['src/ChannelNorm_kernel.o']
+    Headers += ['src/ChannelNorm_cuda.h']
+    Sources += ['src/ChannelNorm_cuda.c']
+    Defines += [('WITH_CUDA', None)]
+    Objects += ['src/ChannelNorm_kernel.o']
 
 ffi = torch.utils.ffi.create_extension(
     name='_ext.channelnorm',
-    headers=strHeaders,
-    sources=strSources,
+    headers=Headers,
+    sources=Sources,
     verbose=False,
-    with_cuda=any(strDefine[0] == 'WITH_CUDA' for strDefine in strDefines),
+    with_cuda=True,
     package=False,
-    relative_to=strBasepath,
-    include_dirs=[os.path.expandvars('$CUDA_HOME') + '/include'],
-    define_macros=strDefines,
-    extra_objects=[os.path.join(strBasepath, strObject) for strObject in strObjects]
+    relative_to=this_folder,
+    define_macros=Defines,
+    extra_objects=[os.path.join(this_folder, Object) for Object in Objects]
 )
 
 if __name__ == '__main__':

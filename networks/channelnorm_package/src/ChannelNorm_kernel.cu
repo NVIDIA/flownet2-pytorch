@@ -16,12 +16,7 @@
     extern "C" {
 #endif
 
-__global__ void kernel_ChannelNorm_updateOutput(
-    const int n,
-    const float* input1, const long4 input1_size, const long4 input1_stride,
-    float* output, const long4 output_size, const long4 output_stride, 
-    int norm_deg
-) {
+__global__ void kernel_ChannelNorm_updateOutput(const int n, const float* input1, const long4 input1_size, const long4 input1_stride, float* output, const long4 output_size, const long4 output_stride, int norm_deg) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (index >= n) {
@@ -56,14 +51,9 @@ __global__ void kernel_ChannelNorm_updateOutput(
 }
 
 
-__global__ void kernel_ChannelNorm_backward_input1(
-    const int n,
-    const float* input1, const long4 input1_size, const long4 input1_stride,
-    const float* output, const long4 output_size, const long4 output_stride,
-    const float* gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride,
-    float* gradInput, const long4 gradInput_size, const long4 gradInput_stride, 
-    int norm_deg
-) {
+__global__ void kernel_ChannelNorm_backward_input1(const int n, const float* input1, const long4 input1_size, const long4 input1_stride,
+    const float* output, const long4 output_size, const long4 output_stride, const float* gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride,
+    float* gradInput, const long4 gradInput_size, const long4 gradInput_stride, int norm_deg) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (index >= n) {
@@ -90,12 +80,7 @@ __global__ void kernel_ChannelNorm_backward_input1(
 
 }
 
-void ChannelNorm_kernel_forward(
-    THCState* state,
-    THCudaTensor* input1,
-    THCudaTensor* output, 
-    int norm_deg
-) {
+void ChannelNorm_kernel_forward(THCState* state, THCudaTensor* input1, THCudaTensor* output, int norm_deg) {
     int n = 0;
     
     const long4 input1_size = make_long4(input1->size[0], input1->size[1], input1->size[2], input1->size[3]);
@@ -106,24 +91,13 @@ void ChannelNorm_kernel_forward(
 
     n = THCudaTensor_nElement(state, output);
     kernel_ChannelNorm_updateOutput<<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, THCState_getCurrentStream(state) >>>(
-        n,
-        THCudaTensor_data(state, input1), input1_size, input1_stride,
-        THCudaTensor_data(state, output), output_size, output_stride, 
-        norm_deg
-    );
+        n, THCudaTensor_data(state, input1), input1_size, input1_stride, THCudaTensor_data(state, output), output_size, output_stride, 
+        norm_deg);
 
     THCudaCheck(cudaGetLastError());
 }
 
-void ChannelNorm_kernel_backward(
-    THCState* state,
-    THCudaTensor* input1,
-    THCudaTensor* output,
-    THCudaTensor* gradOutput, 
-    THCudaTensor* gradInput1,
-    int norm_deg
-
-) {
+void ChannelNorm_kernel_backward(THCState* state, THCudaTensor* input1, THCudaTensor* output, THCudaTensor* gradOutput, THCudaTensor* gradInput1, int norm_deg) {
     int n = 0;
 
     const long4 input1_size = make_long4(input1->size[0], input1->size[1], input1->size[2], input1->size[3]);
@@ -140,11 +114,8 @@ void ChannelNorm_kernel_backward(
 
     n = THCudaTensor_nElement(state, gradInput1);
     kernel_ChannelNorm_backward_input1<<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, THCState_getCurrentStream(state) >>>(
-        n,
-        THCudaTensor_data(state, input1), input1_size, input1_stride,
-        THCudaTensor_data(state, output), output_size, output_stride,
-        THCudaTensor_data(state, gradOutput), gradOutput_size, gradOutput_stride,
-        THCudaTensor_data(state, gradInput1), gradInput1_size, gradInput1_stride,
+        n, THCudaTensor_data(state, input1), input1_size, input1_stride, THCudaTensor_data(state, output), output_size, output_stride,
+        THCudaTensor_data(state, gradOutput), gradOutput_size, gradOutput_stride, THCudaTensor_data(state, gradInput1), gradInput1_size, gradInput1_stride,
         norm_deg
     );
 

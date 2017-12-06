@@ -15,14 +15,10 @@ class ChannelNormFunction(Function):
         assert(input1.is_contiguous() == True)
 
         with torch.cuda.device_of(input1):
-            intBatches, _, intOutputHeight, intOutputWidth = input1.size()
-            output = input1.new().resize_(intBatches, 1, intOutputHeight, intOutputWidth).zero_()
+            b, _, h, w = input1.size()
+            output = input1.new().resize_(b, 1, h, w).zero_()
 
-            channelnorm.ChannelNorm_cuda_forward(
-                input1,
-                output, 
-                self.norm_deg
-            )
+            channelnorm.ChannelNorm_cuda_forward(input1, output, self.norm_deg)
         self.save_for_backward(input1, output)
 
         return output
@@ -34,12 +30,6 @@ class ChannelNormFunction(Function):
             b, c, h, w = input1.size()
             gradInput1 = input1.new().resize_(b,c,h,w).zero_()
 
-            channelnorm.ChannelNorm_cuda_backward(
-                input1,
-                output,
-                gradOutput,
-                gradInput1,
-                self.norm_deg
-            )
+            channelnorm.ChannelNorm_cuda_backward(input1, output, gradOutput, gradInput1, self.norm_deg)
 
         return gradInput1

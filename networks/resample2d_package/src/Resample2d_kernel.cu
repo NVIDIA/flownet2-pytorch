@@ -17,13 +17,8 @@
     extern "C" {
 #endif
 
-__global__ void kernel_Resample2d_updateOutput(
-    const int n,
-    const float* input1, const long4 input1_size, const long4 input1_stride,
-    const float* input2, const long4 input2_size, const long4 input2_stride,
-    float* output, const long4 output_size, const long4 output_stride, 
-    int kernel_size
-) {
+__global__ void kernel_Resample2d_updateOutput(const int n, const float* input1, const long4 input1_size, const long4 input1_stride,
+    const float* input2, const long4 input2_size, const long4 input2_stride, float* output, const long4 output_size, const long4 output_stride, int kernel_size) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (index >= n) {
@@ -72,13 +67,8 @@ __global__ void kernel_Resample2d_updateOutput(
 
 
 __global__ void kernel_Resample2d_backward_input1(
-    const int n,
-    const float* input1, const long4 input1_size, const long4 input1_stride,
-    const float* input2, const long4 input2_size, const long4 input2_stride,
-    const float* gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride,
-    float* gradInput, const long4 gradInput_size, const long4 gradInput_stride, 
-    int kernel_size
-) {
+    const int n, const float* input1, const long4 input1_size, const long4 input1_stride, const float* input2, const long4 input2_size, const long4 input2_stride,
+    const float* gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride, float* gradInput, const long4 gradInput_size, const long4 gradInput_stride, int kernel_size) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -126,14 +116,8 @@ __global__ void kernel_Resample2d_backward_input1(
 }
 
 __global__ void kernel_Resample2d_backward_input2(
-    const int n,
-    const float* input1, const long4 input1_size, const long4 input1_stride,
-    const float* input2, const long4 input2_size, const long4 input2_stride,
-    const float* gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride,
-    float* gradInput, const long4 gradInput_size, const long4 gradInput_stride, 
-    int kernel_size
-
-) {
+    const int n, const float* input1, const long4 input1_size, const long4 input1_stride, const float* input2, const long4 input2_size, const long4 input2_stride,
+    const float* gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride, float* gradInput, const long4 gradInput_size, const long4 gradInput_stride, int kernel_size) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -201,13 +185,7 @@ __global__ void kernel_Resample2d_backward_input2(
 
 }
 
-void Resample2d_kernel_forward(
-    THCState* state,
-    THCudaTensor* input1,
-    THCudaTensor* input2,
-    THCudaTensor* output,
-    int kernel_size
-) {
+void Resample2d_kernel_forward(THCState* state, THCudaTensor* input1, THCudaTensor* input2, THCudaTensor* output, int kernel_size) {
     int n = 0;
 
     const long4 input1_size = make_long4(input1->size[0], input1->size[1], input1->size[2], input1->size[3]);
@@ -221,26 +199,13 @@ void Resample2d_kernel_forward(
 
     n = THCudaTensor_nElement(state, output);
     kernel_Resample2d_updateOutput<<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, THCState_getCurrentStream(state) >>>(
-        n,
-        THCudaTensor_data(state, input1), input1_size, input1_stride,
-        THCudaTensor_data(state, input2), input2_size, input2_stride,
-        THCudaTensor_data(state, output), output_size, output_stride, 
-        kernel_size
-    );
+        n, THCudaTensor_data(state, input1), input1_size, input1_stride, THCudaTensor_data(state, input2), input2_size, input2_stride,
+        THCudaTensor_data(state, output), output_size, output_stride, kernel_size);
 
     THCudaCheck(cudaGetLastError());
 }
 
-void Resample2d_kernel_backward(
-    THCState* state,
-    THCudaTensor* input1,
-    THCudaTensor* input2,
-    THCudaTensor* gradOutput, 
-    THCudaTensor* gradInput1,
-    THCudaTensor* gradInput2, 
-    int kernel_size
-
-) {
+void Resample2d_kernel_backward(THCState* state, THCudaTensor* input1, THCudaTensor* input2, THCudaTensor* gradOutput, THCudaTensor* gradInput1, THCudaTensor* gradInput2, int kernel_size) {
     int n = 0;
 
     const long4 input1_size = make_long4(input1->size[0], input1->size[1], input1->size[2], input1->size[3]);
@@ -257,12 +222,8 @@ void Resample2d_kernel_backward(
 
     n = THCudaTensor_nElement(state, gradOutput);
     kernel_Resample2d_backward_input1<<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, THCState_getCurrentStream(state) >>>(
-        n,
-        THCudaTensor_data(state, input1), input1_size, input1_stride,
-        THCudaTensor_data(state, input2), input2_size, input2_stride,
-        THCudaTensor_data(state, gradOutput), gradOutput_size, gradOutput_stride,
-        THCudaTensor_data(state, gradInput1), gradInput1_size, gradInput1_stride,
-        kernel_size
+        n, THCudaTensor_data(state, input1), input1_size, input1_stride, THCudaTensor_data(state, input2), input2_size, input2_stride,
+        THCudaTensor_data(state, gradOutput), gradOutput_size, gradOutput_stride, THCudaTensor_data(state, gradInput1), gradInput1_size, gradInput1_stride, kernel_size
     );
 
     const long4 gradInput2_size = make_long4(gradInput2->size[0], gradInput2->size[1], gradInput2->size[2], gradInput2->size[3]);
@@ -270,12 +231,8 @@ void Resample2d_kernel_backward(
 
     n = THCudaTensor_nElement(state, gradInput2);
     kernel_Resample2d_backward_input2<<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, THCState_getCurrentStream(state) >>>(
-        n,
-        THCudaTensor_data(state, input1), input1_size, input1_stride,
-        THCudaTensor_data(state, input2), input2_size, input2_stride,
-        THCudaTensor_data(state, gradOutput), gradOutput_size, gradOutput_stride,
-        THCudaTensor_data(state, gradInput2), gradInput2_size, gradInput2_stride, 
-        kernel_size
+        n, THCudaTensor_data(state, input1), input1_size, input1_stride, THCudaTensor_data(state, input2), input2_size, input2_stride,
+        THCudaTensor_data(state, gradOutput), gradOutput_size, gradOutput_stride, THCudaTensor_data(state, gradInput2), gradInput2_size, gradInput2_stride, kernel_size
     );
     THCudaCheck(cudaGetLastError());
 }
