@@ -4,15 +4,13 @@
 #define CUDA_NUM_THREADS 512 
 #define THREADS_PER_BLOCK 64 
 
-#define VEC_0(ARRAY) ((ARRAY).x)
-#define VEC_1(ARRAY) ((ARRAY).y)
-#define VEC_2(ARRAY) ((ARRAY).z)
-#define VEC_3(ARRAY) ((ARRAY).w)
+#define DIM0(TENSOR) ((TENSOR).x)
+#define DIM1(TENSOR) ((TENSOR).y)
+#define DIM2(TENSOR) ((TENSOR).z)
+#define DIM3(TENSOR) ((TENSOR).w)
 
-#define IDX_1(ARRAY, X)          ((ARRAY)[((X) * (ARRAY##_stride.x))])
-#define IDX_2(ARRAY, X, Y)       ((ARRAY)[((X) * (ARRAY##_stride.x)) + ((Y) * (ARRAY##_stride.y))])
-#define IDX_3(ARRAY, X, Y, Z)    ((ARRAY)[((X) * (ARRAY##_stride.x)) + ((Y) * (ARRAY##_stride.y)) + ((Z) * (ARRAY##_stride.z))])
-#define IDX_4(ARRAY, X, Y, Z, W) ((ARRAY)[((X) * (ARRAY##_stride.x)) + ((Y) * (ARRAY##_stride.y)) + ((Z) * (ARRAY##_stride.z)) + ((W) * (ARRAY##_stride.w))])
+#define DIM3_INDEX(TENSOR, xx, yy, zz, ww) ((TENSOR)[((xx) * (TENSOR##_stride.x)) + ((yy) * (TENSOR##_stride.y)) + ((zz) * (TENSOR##_stride.z)) + ((ww) * (TENSOR##_stride.w))])
+
 
 #ifdef __cplusplus
     extern "C" {
@@ -30,19 +28,19 @@ __global__ void kernel_ChannelNorm_updateOutput(
         return;
     }
 
-    int dim_b = VEC_0(output_size);
-    int dim_c = VEC_1(output_size);
-    int dim_h = VEC_2(output_size);
-    int dim_w = VEC_3(output_size);
+    int dim_b = DIM0(output_size);
+    int dim_c = DIM1(output_size);
+    int dim_h = DIM2(output_size);
+    int dim_w = DIM3(output_size);
     int dim_chw = dim_c * dim_h * dim_w;
 
     int b = ( index / dim_chw ) % dim_b;
     int y = ( index / dim_w )   % dim_h;
     int x = ( index          )  % dim_w;
 
-    int i1dim_c = VEC_1(input1_size);
-    int i1dim_h = VEC_2(input1_size);
-    int i1dim_w = VEC_3(input1_size);
+    int i1dim_c = DIM1(input1_size);
+    int i1dim_h = DIM2(input1_size);
+    int i1dim_w = DIM3(input1_size);
     int i1dim_chw = i1dim_c * i1dim_h * i1dim_w;
     int i1dim_hw  = i1dim_h * i1dim_w;
 
@@ -74,10 +72,10 @@ __global__ void kernel_ChannelNorm_backward_input1(
 
     float val = 0.0;
 
-    int dim_b = VEC_0(gradInput_size);
-    int dim_c = VEC_1(gradInput_size);
-    int dim_h = VEC_2(gradInput_size);
-    int dim_w = VEC_3(gradInput_size);
+    int dim_b = DIM0(gradInput_size);
+    int dim_c = DIM1(gradInput_size);
+    int dim_h = DIM2(gradInput_size);
+    int dim_w = DIM3(gradInput_size);
     int dim_chw = dim_c * dim_h * dim_w;
     int dim_hw  = dim_h * dim_w;
 

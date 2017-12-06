@@ -1,5 +1,3 @@
-# freda (todo) : models for S, C, CS, CSS, SD, CSS-SD
-# from networks.FlowNet2 import *
 import torch
 import torch.nn as nn
 from torch.nn import init
@@ -93,9 +91,6 @@ class FlowNet2(nn.Module):
                 # init_deconv_bilinear(m.weight)
 
     def init_deconv_bilinear(self, weight):
-        print "\n" * 2 
-        print "Param Init"
-        print "*"*10
         f_shape = weight.size()
         heigh, width = f_shape[-2], f_shape[-1]
         f = np.ceil(width/2.0)
