@@ -1,6 +1,6 @@
 # flownet2-pytorch 
 
-Pytorch implementation of [FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks](https://arxiv.org/abs/1612.01925). FlowNet2 Caffe implementation : [flownet2](https://github.com/lmb-freiburg/flownet2)
+Pytorch implementation of [FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks](https://arxiv.org/abs/1612.01925).<br /> FlowNet2 Caffe implementation : [flownet2](https://github.com/lmb-freiburg/flownet2)
 
 Multiple GPU training is supported, and the code provides examples for training or inference on [MPI-Sintel](http://sintel.is.tue.mpg.de/) clean and final datasets. The same commands can be used for training or inference with other datasets. See below for more detail.
 
