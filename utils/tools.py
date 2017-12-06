@@ -122,12 +122,15 @@ class IteratorTimer():
 
 def gpumemusage():
     gpu_mem = subprocess.check_output("nvidia-smi | grep MiB | cut -f 3 -d '|'", shell=True).replace(' ', '').replace('\n', '').replace('i', '')
-    curr, tot = [float(a[:-2]) for a in gpu_mem.split('/')]
-    
-    util = "%1.2f"%(100*curr/tot)+'%'
-    cmem = str(int(math.ceil(curr/1024.)))+'GB'
-    gmem = str(int(math.ceil(tot/1024.)))+'GB'
-    gpu_mem = util + '--' + join(cmem, gmem)
+    all_stat = [float(a) for a in gpu_mem.replace('/','').split('MB')[:-1]]
+
+    gpu_mem = ''
+    for i in range(len(all_stat)/2):
+        curr, tot = all_stat[2*i], all_stat[2*i+1]
+        util = "%1.2f"%(100*curr/tot)+'%'
+        cmem = str(int(math.ceil(curr/1024.)))+'GB'
+        gmem = str(int(math.ceil(tot/1024.)))+'GB'
+        gpu_mem += util + '--' + join(cmem, gmem) + ' '
     return gpu_mem
 
 
