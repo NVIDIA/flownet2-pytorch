@@ -1,3 +1,7 @@
+'''
+Portions of this code copyright 2017, Clement Pinard
+'''
+
 import torch
 import torch.nn as nn
 from torch.nn import init
@@ -52,10 +56,9 @@ class FlowNetS(nn.Module):
                 init.xavier_uniform(m.weight)
                 # init_deconv_bilinear(m.weight)
 
-    def forward(self, x, ntk_num='1'):
+    def forward(self, x):
         out_conv1 = self.conv1(x)
-        # if ntk_num =='2':
-        #     return out_conv1, out_conv1
+
         out_conv2 = self.conv2(out_conv1)
         out_conv3 = self.conv3_1(self.conv3(out_conv2))
         out_conv4 = self.conv4_1(self.conv4(out_conv3))

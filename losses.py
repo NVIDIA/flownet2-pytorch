@@ -1,3 +1,7 @@
+'''
+Portions of this code copyright 2017, Clement Pinard
+'''
+
 # freda (todo) : adversarial loss 
 
 import torch
