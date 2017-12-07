@@ -51,12 +51,6 @@ class TimerBlock:
         fid = open(fid, 'a')
         fid.write("%s\n"%(string))
         fid.close()
-        # duration = time.clock() - self.start
-        # units = 's'
-        # if duration > 60:
-        #     duration = duration / 60.
-        #     units = 'm'
-        # print("  [{:.3f}{}] {}".format(duration, units, string))
 
 def add_arguments_for_module(parser, module, argument_for_class, default, skip_params=[], parameter_defaults={}):
     argument_group = parser.add_argument_group(argument_for_class.capitalize())
