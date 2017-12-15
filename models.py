@@ -139,7 +139,7 @@ class FlowNet2(nn.Module):
         concat2 = torch.cat((x, resampled_img1, flownets1_flow/self.div_flow, norm_diff_img0), dim=1)
 
         # flownets2
-        flownets2_flow2 = self.flownets_2(concat2, '2')[0]
+        flownets2_flow2 = self.flownets_2(concat2)[0]
         flownets2_flow = self.upsample4(flownets2_flow2 * self.div_flow)
         norm_flownets2_flow = self.channelnorm(flownets2_flow)
 
@@ -246,7 +246,7 @@ class FlowNet2S(FlowNetS.FlowNetS):
         super(FlowNet2S,self).__init__(args, batchNorm=batchNorm)
         self.rgb_max = args.rgb_max
 
-    def forward(self, x, ntk_num='1'):
+    def forward(self, x):
         rgb_mean = inputs.contiguous().view(inputs.size()[:2]+(-1,)).mean(dim=-1).view(inputs.size()[:2] + (1,1,1,))
         x = (inputs - rgb_mean) / self.rgb_max
         out_conv1 = self.conv1(x)
@@ -282,14 +282,14 @@ class FlowNet2S(FlowNetS.FlowNetS):
         if self.training:
             return flow2,flow3,flow4,flow5,flow6
         else:
-            return flow2
+            return flow2,
 
 class FlowNet2SD(FlowNetSD.FlowNetSD):
     def __init__(self, args, batchNorm=False):
         super(FlowNet2SD,self).__init__(args, batchNorm=batchNorm)
         self.rgb_max = args.rgb_max
 
-    def forward(self, x, ntk_num='1'):
+    def forward(self, x):
         rgb_mean = inputs.contiguous().view(inputs.size()[:2]+(-1,)).mean(dim=-1).view(inputs.size()[:2] + (1,1,1,))
         x = (inputs - rgb_mean) / self.rgb_max
         
@@ -483,7 +483,7 @@ class FlowNet2CSS(nn.Module):
         concat2 = torch.cat((x, resampled_img1, flownets1_flow/self.div_flow, norm_diff_img0), dim=1)
 
         # flownets2
-        flownets2_flow2 = self.flownets_2(concat2, '2')[0]
+        flownets2_flow2 = self.flownets_2(concat2)[0]
         flownets2_flow = self.upsample3(flownets2_flow2 * self.div_flow)
 
         return flownets2_flow

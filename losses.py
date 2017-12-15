@@ -56,7 +56,7 @@ class MultiScale(nn.Module):
         self.loss_weights = torch.FloatTensor([(l_weight / 2 ** scale) for scale in range(self.numScales)])
         self.args = args
         self.l_type = norm
-
+        self.div_flow = 0.05
         assert(len(self.loss_weights) == self.numScales)
 
         if self.l_type == 'L1':
@@ -69,16 +69,16 @@ class MultiScale(nn.Module):
     def forward(self, output, target):
         lossvalue = 0
         epevalue = 0
+
         if type(output) is tuple:
+            target = self.div_flow * target
             for i, output_ in enumerate(output):
                 target_ = self.multiScales[i](target)
                 epevalue += self.loss_weights[i]*EPE(output_, target_)
                 lossvalue += self.loss_weights[i]*self.loss(output_, target_)
-
             return ['MultiScale-'+self.l_type, 'EPE'], [lossvalue, epevalue]
         else:
-            target_ = self.multiScales[0](target)
-            epevalue += EPE(output, target_)
-            lossvalue += self.loss(output, target_)
+            epevalue += EPE(output, target)
+            lossvalue += self.loss(output, target)
             return [self.l_type, 'EPE'], [lossvalue, epevalue]
 

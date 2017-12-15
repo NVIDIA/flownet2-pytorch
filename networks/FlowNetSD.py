@@ -62,7 +62,7 @@ class FlowNetSD(nn.Module):
 
 
 
-    def forward(self, x, ntk_num='1'):
+    def forward(self, x):
         out_conv0 = self.conv0(x)
         out_conv1 = self.conv1_1(self.conv1(out_conv0))
         out_conv2 = self.conv2_1(self.conv2(out_conv1))
