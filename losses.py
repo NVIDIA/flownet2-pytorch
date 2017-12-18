@@ -30,22 +30,24 @@ class L1Loss(nn.Module):
         super(L1Loss, self).__init__()
         self.args = args
         self.loss = L1()
+        self.loss_labels = ['L1', 'EPE']
 
     def forward(self, output, target):
         lossvalue = self.loss(output, target)
         epevalue = EPE(output, target)
-        return ['L1', 'EPE'], [lossvalue, epevalue]
+        return [lossvalue, epevalue]
 
 class L2Loss(nn.Module):
     def __init__(self, args):
         super(L2Loss, self).__init__()
         self.args = args
         self.loss = L2()
+        self.loss_labels = ['L2', 'EPE']
 
     def forward(self, output, target):
         lossvalue = self.loss(output, target)
         epevalue = EPE(output, target)
-        return ['L2', 'EPE'], [lossvalue, epevalue]
+        return [lossvalue, epevalue]
 
 class MultiScale(nn.Module):
     def __init__(self, args, startScale = 4, numScales = 5, l_weight= 0.32, norm= 'L1'):
@@ -65,6 +67,7 @@ class MultiScale(nn.Module):
             self.loss = L2()
 
         self.multiScales = [nn.AvgPool2d(self.startScale * (2**scale), self.startScale * (2**scale)) for scale in range(self.numScales)]
+        self.loss_labels = [self.l_type, 'EPE']
 
     def forward(self, output, target):
         lossvalue = 0
@@ -80,5 +83,5 @@ class MultiScale(nn.Module):
         else:
             epevalue += EPE(output, target)
             lossvalue += self.loss(output, target)
-            return [self.l_type, 'EPE'], [lossvalue, epevalue]
+            return  [lossvalue, epevalue]
 

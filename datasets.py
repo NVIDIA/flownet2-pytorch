@@ -357,7 +357,7 @@ class ImagesFromFolder(data.Dataset):
     images = np.array(images).transpose(3,0,1,2)
     images = torch.from_numpy(images.astype(np.float32))
 
-    return [images], []
+    return [images], [torch.zeros(images.size()[0:1] + (2,) + images.size()[-2:])]
 
   def __len__(self):
     return self.size * self.replicates
