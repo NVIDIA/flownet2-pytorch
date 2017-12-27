@@ -13,11 +13,11 @@ from submodules import *
 'Parameter count : 38,676,504 '
 
 class FlowNetS(nn.Module):
-    def __init__(self, args, batchNorm=True):
+    def __init__(self, args, input_channels = 12, batchNorm=True):
         super(FlowNetS,self).__init__()
 
         self.batchNorm = batchNorm
-        self.conv1   = conv(self.batchNorm,  12,   64, kernel_size=7, stride=2)
+        self.conv1   = conv(self.batchNorm,  input_channels,   64, kernel_size=7, stride=2)
         self.conv2   = conv(self.batchNorm,  64,  128, kernel_size=5, stride=2)
         self.conv3   = conv(self.batchNorm, 128,  256, kernel_size=5, stride=2)
         self.conv3_1 = conv(self.batchNorm, 256,  256)
@@ -55,6 +55,7 @@ class FlowNetS(nn.Module):
                     init.uniform(m.bias)
                 init.xavier_uniform(m.weight)
                 # init_deconv_bilinear(m.weight)
+        self.upsample1 = nn.Upsample(scale_factor=4, mode='bilinear')
 
     def forward(self, x):
         out_conv1 = self.conv1(x)
