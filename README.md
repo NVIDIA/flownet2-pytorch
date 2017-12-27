@@ -53,7 +53,7 @@ A Dockerfile with the above dependencies is available
     bash launch_docker.sh
 
 ## Convert Official [Caffe Pre-trained Models](https://lmb.informatik.uni-freiburg.de/resources/software.php) to PyTorch
-1. Download caffe-models and build flownet2-caffe. This step creates a docker image named `flownet2`. The pre-trained caffe-models will be located in `/flownet2/flownet2/models` inside this container. In total, this step will require ~8.5 GB of memory.
+1. Download caffe-models and build flownet2-caffe. This step creates a docker image named `flownet2`. The pre-trained caffe-models will be located in `/flownet2/flownet2/models` inside this container. In total, this step will require ~8.5 GB of memory. More information on how the caffe models are pre-trained can be found here : [https://lmb.informatik.uni-freiburg.de/resources/software.php](https://lmb.informatik.uni-freiburg.de/resources/software.php)
     
     #Run this command for step 1 <br />
     bash ./download_caffe_models.sh
