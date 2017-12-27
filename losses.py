@@ -67,7 +67,7 @@ class MultiScale(nn.Module):
             self.loss = L2()
 
         self.multiScales = [nn.AvgPool2d(self.startScale * (2**scale), self.startScale * (2**scale)) for scale in range(self.numScales)]
-        self.loss_labels = [self.l_type, 'EPE']
+        self.loss_labels = ['MultiScale-'+self.l_type, 'EPE'],
 
     def forward(self, output, target):
         lossvalue = 0
