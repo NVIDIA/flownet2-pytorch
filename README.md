@@ -52,6 +52,27 @@ A Dockerfile with the above dependencies is available
     # Build and launch docker image
     bash launch_docker.sh
 
+## Convert Official [Caffe Pre-trained Models](https://lmb.informatik.uni-freiburg.de/resources/software.php) to PyTorch
+1. Download caffe-models and build flownet2-caffe. This step creates a docker image named `flownet2`. The pre-trained caffe-models will be located in `/flownet2/flownet2/models` inside this container. In total, this step will require ~8.5 GB of memory.
+    
+    #Run this command for step 1 <br />
+    bash ./download_caffe_models.sh
+    
+ 2. Convert caffe-models to PyTorch. This step will launch flownet2 image, and convert and save PyTorch checkpoints. The input argument to this step is the path of your cloned flownet2-pytorch.
+
+    #Run this command for step 2 <br />
+    bash ./run-caffe2pytorch.sh /path/to/your/flownet2-pytorch/clone
+
+The above steps will create checkpoints for the different architectures named as below: <br />
+    
+    FlowNet2_checkpoint.pth.tar 
+    FlowNet2-C_checkpoint.pth.tar 
+    FlowNet2-CS_checkpoint.pth.tar 
+    FlowNet2-CSS_checkpoint.pth.tar 
+    FlowNet2-CSS-ft-sd_checkpoint.pth.tar 
+    FlowNet2-S_checkpoint.pth.tar 
+    FlowNet2-SD_checkpoint.pth.tar 
+    
 ## Inference
     # Example on MPISintel Clean   
     python main.py --inference --model FlowNet2 --save_flow --inference_dataset MpiSintelClean \
