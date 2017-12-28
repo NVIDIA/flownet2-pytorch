@@ -88,7 +88,6 @@ def parse_flownets(modules, weights, biases, param_prefix='net2_'):
             weight = weights[keys[i]].copy()
             bias = biases[keys[i]].copy()
             if keys[i] == param_prefix+'conv1':
-                # print ("%s :"%(keys[i]), m.weight.size(), m.bias.size(), tf_w[keys[i]].shape[::-1])
                 m.weight.data[:,0:3,:,:] = torch.from_numpy(np.flip(weight[:,0:3,:,:], axis=1).copy())
                 m.weight.data[:,3:6,:,:] = torch.from_numpy(np.flip(weight[:,3:6,:,:], axis=1).copy())
                 m.weight.data[:,6:9,:,:] = torch.from_numpy(np.flip(weight[:,6:9,:,:], axis=1).copy())
