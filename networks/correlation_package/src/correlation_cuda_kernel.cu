@@ -50,8 +50,8 @@ __global__ void Correlation_forward( float *output, int nOutputChannels, int out
     int displacement_size = 2 * displacement_rad + 1;
 
     int n  = blockIdx.x;
-    int y1 = blockIdx.y * stride1 + max_displacement;
-    int x1 = blockIdx.z * stride1 + max_displacement;
+    int y1 = blockIdx.y * stride1 + max_displacement + kernel_rad;
+    int x1 = blockIdx.z * stride1 + max_displacement + kernel_rad;
     int c = threadIdx.x;
 
     int pdimyxc = pInputHeight * pInputWidth * nInputChannels;
