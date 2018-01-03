@@ -58,7 +58,7 @@ A Dockerfile with the above dependencies is available
     #Run this command for step 1 <br />
     bash ./download_caffe_models.sh
     
- 2. Convert caffe-models to PyTorch. This step will launch flownet2 image, and convert and save PyTorch checkpoints. The input argument to this step is the path of your cloned flownet2-pytorch.
+ 2. Convert caffe-models to PyTorch. This step will launch flownet2 image, and convert and save PyTorch checkpoints. The input argument to this step is the path of your cloned flownet2-pytorch. Note, custom layers must be installed (by running `bash ./install.sh`) before doing step 2.
 
     #Run this command for step 2 <br />
     bash ./run-caffe2pytorch.sh /path/to/your/flownet2-pytorch/clone
