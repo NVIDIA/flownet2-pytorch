@@ -52,8 +52,8 @@ A Dockerfile with the above dependencies is available
     # Build and launch docker image
     bash launch_docker.sh
 
-## Official [Caffe Pre-trained Models](https://drive.google.com/file/d/1TVv0BnNFh3rpHZvD-easMb9jYrPE2Eqd/view?usp=sharing)
-We've included caffe pre-trained models. If you use these pre-trained weights in your research, please cite using : 
+## Converted Caffe Pre-trained Models
+We've included the caffe pre-trained models. If you use these pre-trained weights in your research, please cite using : 
 ````
 @InProceedings{IMKDB17,
   author       = "E. Ilg and N. Mayer and T. Saikia and M. Keuper and A. Dosovitskiy and T. Brox",
