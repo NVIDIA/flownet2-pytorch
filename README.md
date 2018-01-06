@@ -52,26 +52,25 @@ A Dockerfile with the above dependencies is available
     # Build and launch docker image
     bash launch_docker.sh
 
-## Convert Official [Caffe Pre-trained Models](https://lmb.informatik.uni-freiburg.de/resources/software.php) to PyTorch
-1. Download caffe-models and build flownet2-caffe. This step creates a docker image named `flownet2`. The pre-trained caffe-models will be located in `/flownet2/flownet2/models` inside this container. In total, this step will require ~8.5 GB of memory. More information on how the caffe models are pre-trained can be found here : [https://lmb.informatik.uni-freiburg.de/resources/software.php](https://lmb.informatik.uni-freiburg.de/resources/software.php)
-    
-    #Run this command for step 1 <br />
-    bash ./download_caffe_models.sh
-    
- 2. Convert caffe-models to PyTorch. This step will launch flownet2 image, and convert and save PyTorch checkpoints. The input argument to this step is the path of your cloned flownet2-pytorch. Note, custom layers must be installed (by running `bash ./install.sh`) before doing step 2.
-
-    #Run this command for step 2 <br />
-    bash ./run-caffe2pytorch.sh /path/to/your/flownet2-pytorch/clone
-
-The above steps will create checkpoints for the different architectures named as below: <br />
-    
-    FlowNet2_checkpoint.pth.tar 
-    FlowNet2-C_checkpoint.pth.tar 
-    FlowNet2-CS_checkpoint.pth.tar 
-    FlowNet2-CSS_checkpoint.pth.tar 
-    FlowNet2-CSS-ft-sd_checkpoint.pth.tar 
-    FlowNet2-S_checkpoint.pth.tar 
-    FlowNet2-SD_checkpoint.pth.tar 
+## Official [Caffe Pre-trained Models](https://drive.google.com/file/d/1TVv0BnNFh3rpHZvD-easMb9jYrPE2Eqd/view?usp=sharing)
+We've included caffe pre-trained models. If you use these pre-trained weights in your research, please cite using : 
+````
+@InProceedings{IMKDB17,
+  author       = "E. Ilg and N. Mayer and T. Saikia and M. Keuper and A. Dosovitskiy and T. Brox",
+  title        = "FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks",
+  booktitle    = "IEEE Conference on Computer Vision and Pattern Recognition (CVPR)",
+  month        = "Jul",
+  year         = "2017",
+  url          = "http://lmb.informatik.uni-freiburg.de//Publications/2017/IMKDB17"
+}
+````
+* [FlowNet2](https://drive.google.com/file/d/1hF8vS6YeHkx3j2pfCeQqqZGwA_PJq_Da/view?usp=sharing)[620MB]
+* [FlowNet2-C](https://drive.google.com/file/d/1BFT6b7KgKJC8rA59RmOVAXRM_S7aSfKE/view?usp=sharing)[149MB]
+* [FlowNet2-CS](https://drive.google.com/file/d/1iBJ1_o7PloaINpa8m7u_7TsLCX0Dt_jS/view?usp=sharing)[297MB]
+* [FlowNet2-CSS](https://drive.google.com/file/d/157zuzVf4YMN6ABAQgZc8rRmR5cgWzSu8/view?usp=sharing)[445MB]
+* [FlowNet2-CSS-ft-sd](https://drive.google.com/file/d/1R5xafCIzJCXc8ia4TGfC65irmTNiMg6u/view?usp=sharing)[445MB]
+* [FlowNet2-S](https://drive.google.com/file/d/1V61dZjFomwlynwlYklJHC-TLfdFom3Lg/view?usp=sharing)[148MB]
+* [FlowNet2-SD](https://drive.google.com/file/d/1QW03eyYG_vD-dT-Mx4wopYvtPu_msTKn/view?usp=sharing)[173MB]
     
 ## Inference
     # Example on MPISintel Clean   
