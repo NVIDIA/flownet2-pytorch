@@ -11,20 +11,21 @@ import utils.frame_utils as frame_utils
 from scipy.misc import imread, imresize
 
 class StaticRandomCrop(object):
-    def __init__(self, size):
-        self.th, self.tw = size
+    def __init__(self, image_size, crop_size):
+        self.th, self.tw = crop_size
+        h, w = image_size
+        self.h1 = random.randint(0, h - self.th)
+        self.w1 = random.randint(0, w - self.tw)
+
     def __call__(self, img):
-        h, w, _ = img.shape
-        h1 = random.randint(0, h - self.th)
-        w1 = random.randint(0, w - self.tw)
-        return img[h1:(h1+self.th), w1:(w1+self.tw),:]
+        return img[self.h1:(self.h1+self.th), self.w1:(self.w1+self.tw),:]
 
 class StaticCenterCrop(object):
-    def __init__(self, size):
-        self.th, self.tw = size
+    def __init__(self, image_size, crop_size):
+        self.th, self.tw = crop_size
+        self.h, self.w = image_size
     def __call__(self, img):
-        h, w, _ = img.shape
-        return img[(h-self.th)/2:(h+self.th)/2, (w-self.tw)/2:(w+self.tw)/2,:]
+        return img[(self.h-self.th)/2:(self.h+self.th)/2, (self.w-self.tw)/2:(self.w+self.tw)/2,:]
 
 class MpiSintel(data.Dataset):
     def __init__(self, args, is_cropped = False, root = '', dstype = 'clean', replicates = 1):
@@ -82,14 +83,14 @@ class MpiSintel(data.Dataset):
         flow = frame_utils.read_gen(self.flow_list[index])
 
         images = [img1, img2]
+        image_size = img1.shape[:2]
+
         if self.is_cropped:
-            cropper = StaticRandomCrop(self.crop_size)
-            images = map(cropper, images)
-            flow = cropper(flow)
+            cropper = StaticRandomCrop(image_size, self.crop_size)
         else:
-            cropper = StaticCenterCrop(self.render_size)
-            images = map(cropper, images)
-            flow = cropper(flow)
+            cropper = StaticCenterCrop(image_size, self.render_size)
+        images = map(cropper, images)
+        flow = cropper(flow)
 
         images = np.array(images).transpose(3,0,1,2)
         flow = flow.transpose(2,0,1)
@@ -151,14 +152,14 @@ class FlyingChairs(data.Dataset):
     flow = frame_utils.read_gen(self.flow_list[index])
 
     images = [img1, img2]
+    image_size = img1.shape[:2]
     if self.is_cropped:
-        cropper = StaticRandomCrop(self.crop_size)
-        images = map(cropper, images)
-        flow = cropper(flow)
+        cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
-        cropper = StaticCenterCrop(self.render_size)
-        images = map(cropper, images)
-        flow = cropper(flow)
+        cropper = StaticCenterCrop(image_size, self.render_size)
+    images = map(cropper, images)
+    flow = cropper(flow)
+
 
     images = np.array(images).transpose(3,0,1,2)
     flow = flow.transpose(2,0,1)
@@ -218,14 +219,14 @@ class FlyingThings(data.Dataset):
     flow = frame_utils.read_gen(self.flow_list[index])
 
     images = [img1, img2]
+    image_size = img1.shape[:2]
     if self.is_cropped:
-        cropper = StaticRandomCrop(self.crop_size)
-        images = map(cropper, images)
-        flow = cropper(flow)
+        cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
-        cropper = StaticCenterCrop(self.render_size)
-        images = map(cropper, images)
-        flow = cropper(flow)
+        cropper = StaticCenterCrop(image_size, self.render_size)
+    images = map(cropper, images)
+    flow = cropper(flow)
+
 
     images = np.array(images).transpose(3,0,1,2)
     flow = flow.transpose(2,0,1)
@@ -286,15 +287,16 @@ class ChairsSDHom(data.Dataset):
 
     flow = frame_utils.read_gen(self.flow_list[index])
     flow = flow[::-1,:,:]
+
     images = [img1, img2]
+    image_size = img1.shape[:2]
     if self.is_cropped:
-        cropper = StaticRandomCrop(self.crop_size)
-        images = map(cropper, images)
-        flow = cropper(flow)
+        cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
-        cropper = StaticCenterCrop(self.render_size)
-        images = map(cropper, images)
-        flow = cropper(flow)
+        cropper = StaticCenterCrop(image_size, self.render_size)
+    images = map(cropper, images)
+    flow = cropper(flow)
+
 
     images = np.array(images).transpose(3,0,1,2)
     flow = flow.transpose(2,0,1)
@@ -347,12 +349,13 @@ class ImagesFromFolder(data.Dataset):
     img2 = frame_utils.read_gen(self.image_list[index][1])
 
     images = [img1, img2]
+    image_size = img1.shape[:2]
     if self.is_cropped:
-        cropper = StaticRandomCrop(self.crop_size)
-        images = map(cropper, images)
+        cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
-        cropper = StaticCenterCrop(self.render_size)
-        images = map(cropper, images)
+        cropper = StaticCenterCrop(image_size, self.render_size)
+    images = map(cropper, images)
+    flow = cropper(flow)
 
     images = np.array(images).transpose(3,0,1,2)
     images = torch.from_numpy(images.astype(np.float32))
@@ -361,3 +364,30 @@ class ImagesFromFolder(data.Dataset):
 
   def __len__(self):
     return self.size * self.replicates
+
+'''
+import argparse
+import sys, os
+import importlib
+from scipy.misc import imsave
+import numpy as np
+
+import datasets
+reload(datasets)
+
+parser = argparse.ArgumentParser()
+args = parser.parse_args()
+args.inference_size = [1080, 1920]
+args.crop_size = [384, 512]
+args.effective_batch_size = 1
+
+index = 500
+v_dataset = datasets.MpiSintelClean(args, True, root='../MPI-Sintel/flow/training')
+a, b = v_dataset[index]
+im1 = a[0].numpy()[:,0,:,:].transpose(1,2,0)
+im2 = a[0].numpy()[:,1,:,:].transpose(1,2,0)
+imsave('./img1.png', im1)
+imsave('./img2.png', im2)
+flow_utils.writeFlow('./flow.flo', b[0].numpy().transpose(1,2,0))
+
+'''
