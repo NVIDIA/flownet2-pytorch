@@ -315,8 +315,8 @@ if __name__ == '__main__':
                 all_losses = np.array(statistics)
 
                 for i, key in enumerate(loss_labels):
-                    logger.add_scalar('average batch ' + key, all_losses[:, i].mean(), global_iteration)
-                    logger.add_histogram(key, all_losses[:, i], global_iteration)
+                    logger.add_scalar('average batch ' + str(key), all_losses[:, i].mean(), global_iteration)
+                    logger.add_histogram(str(key), all_losses[:, i], global_iteration)
 
             # Reset Summary
             statistics = []
