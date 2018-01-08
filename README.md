@@ -1,6 +1,16 @@
 # flownet2-pytorch 
 
-Pytorch implementation of [FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks](https://arxiv.org/abs/1612.01925).<br /> FlowNet2 Caffe implementation : [flownet2](https://github.com/lmb-freiburg/flownet2)
+Pytorch implementation of [FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks](https://arxiv.org/abs/1612.01925). If you find this implementation useful in your work, please acknowledge it appropriately and cite the paper using:
+````
+@InProceedings{IMKDB17,
+  author       = "E. Ilg and N. Mayer and T. Saikia and M. Keuper and A. Dosovitskiy and T. Brox",
+  title        = "FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks",
+  booktitle    = "IEEE Conference on Computer Vision and Pattern Recognition (CVPR)",
+  month        = "Jul",
+  year         = "2017",
+  url          = "http://lmb.informatik.uni-freiburg.de//Publications/2017/IMKDB17"
+}
+````
 
 Multiple GPU training is supported, and the code provides examples for training or inference on [MPI-Sintel](http://sintel.is.tue.mpg.de/) clean and final datasets. The same commands can be used for training or inference with other datasets. See below for more detail.
 
@@ -53,17 +63,8 @@ A Dockerfile with the above dependencies is available
     bash launch_docker.sh
 
 ## Converted Caffe Pre-trained Models
-We've included the caffe pre-trained models. If you use these pre-trained weights in your research, please cite using : 
-````
-@InProceedings{IMKDB17,
-  author       = "E. Ilg and N. Mayer and T. Saikia and M. Keuper and A. Dosovitskiy and T. Brox",
-  title        = "FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks",
-  booktitle    = "IEEE Conference on Computer Vision and Pattern Recognition (CVPR)",
-  month        = "Jul",
-  year         = "2017",
-  url          = "http://lmb.informatik.uni-freiburg.de//Publications/2017/IMKDB17"
-}
-````
+We've included the caffe pre-trained models. 
+
 * [FlowNet2](https://drive.google.com/file/d/1hF8vS6YeHkx3j2pfCeQqqZGwA_PJq_Da/view?usp=sharing)[620MB]
 * [FlowNet2-C](https://drive.google.com/file/d/1BFT6b7KgKJC8rA59RmOVAXRM_S7aSfKE/view?usp=sharing)[149MB]
 * [FlowNet2-CS](https://drive.google.com/file/d/1iBJ1_o7PloaINpa8m7u_7TsLCX0Dt_jS/view?usp=sharing)[297MB]
