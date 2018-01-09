@@ -1,16 +1,6 @@
 # flownet2-pytorch 
 
-Pytorch implementation of [FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks](https://arxiv.org/abs/1612.01925). If you find this implementation useful in your work, please acknowledge it appropriately and cite the paper using:
-````
-@InProceedings{IMKDB17,
-  author       = "E. Ilg and N. Mayer and T. Saikia and M. Keuper and A. Dosovitskiy and T. Brox",
-  title        = "FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks",
-  booktitle    = "IEEE Conference on Computer Vision and Pattern Recognition (CVPR)",
-  month        = "Jul",
-  year         = "2017",
-  url          = "http://lmb.informatik.uni-freiburg.de//Publications/2017/IMKDB17"
-}
-````
+Pytorch implementation of [FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks](https://arxiv.org/abs/1612.01925). 
 
 Multiple GPU training is supported, and the code provides examples for training or inference on [MPI-Sintel](http://sintel.is.tue.mpg.de/) clean and final datasets. The same commands can be used for training or inference with other datasets. See below for more detail.
 
@@ -94,6 +84,19 @@ We've included caffe pre-trained models. Should you use these pre-trained weight
     
 ## Results on MPI-Sintel
 [![Predicted flows on MPI-Sintel](./image.png)](https://www.youtube.com/watch?v=HtBmabY8aeU "Predicted flows on MPI-Sintel")
+
+## Reference 
+If you find this implementation useful in your work, please acknowledge it appropriately and cite the paper using:
+````
+@InProceedings{IMKDB17,
+  author       = "E. Ilg and N. Mayer and T. Saikia and M. Keuper and A. Dosovitskiy and T. Brox",
+  title        = "FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks",
+  booktitle    = "IEEE Conference on Computer Vision and Pattern Recognition (CVPR)",
+  month        = "Jul",
+  year         = "2017",
+  url          = "http://lmb.informatik.uni-freiburg.de//Publications/2017/IMKDB17"
+}
+````
 
 ## Acknowledgments
 Parts of this code were derived, as noted in the code, from [ClementPinard/FlowNetPytorch](https://github.com/ClementPinard/FlowNetPytorch).
