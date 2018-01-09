@@ -355,8 +355,7 @@ class ImagesFromFolder(data.Dataset):
     else:
         cropper = StaticCenterCrop(image_size, self.render_size)
     images = map(cropper, images)
-    flow = cropper(flow)
-
+    
     images = np.array(images).transpose(3,0,1,2)
     images = torch.from_numpy(images.astype(np.float32))
 
