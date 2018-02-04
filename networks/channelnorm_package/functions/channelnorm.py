@@ -8,7 +8,7 @@ class ChannelNormFunction(Function):
     def forward(ctx, input1, norm_deg=2):
         assert input1.is_contiguous()
         b, _, h, w = input1.size()
-        output = input1.new().resize_(b, 1, h, w).zero_()
+        output = input1.new(b, 1, h, w).zero_()
 
         channelnorm.ChannelNorm_cuda_forward(input1, output, norm_deg)
         ctx.save_for_backward(input1, output)

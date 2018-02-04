@@ -14,7 +14,7 @@ class Resample2dFunction(Function):
 
         _, d, _, _ = input1.size()
         b, _, h, w = input2.size()
-        output = input1.new().resize_(b, d, h, w).zero_()
+        output = input1.new(b, d, h, w).zero_()
 
         resample2d.Resample2d_cuda_forward(input1, input2, output, kernel_size)
 
