@@ -165,10 +165,10 @@ __global__ void Correlation_backward_input1(int item, float *gradInput1, int nIn
 
     float nelems = kernel_size * kernel_size * nInputChannels;
 
-    __shared__ float prod_sum[CUDA_NUM_THREADS];
+    __shared__ float prod_sum[THREADS_PER_BLOCK];
     prod_sum[tch_off] = 0;
 
-    for (int tc = tch_off; tc < nOutputChannels; tc += CUDA_NUM_THREADS) {
+    for (int tc = tch_off; tc < nOutputChannels; tc += THREADS_PER_BLOCK) {
 
       int i2 = (tc % displacement_size - displacement_rad) * stride2;
       int j2 = (tc / displacement_size - displacement_rad) * stride2;
@@ -188,7 +188,7 @@ __global__ void Correlation_backward_input1(int item, float *gradInput1, int nIn
 
     if(tch_off == 0) {
       float reduce_sum = 0;
-      for(int idx = 0; idx < CUDA_NUM_THREADS; idx++) {
+      for(int idx = 0; idx < THREADS_PER_BLOCK; idx++) {
           reduce_sum += prod_sum[idx];
       }
       const int indx1 = n * odimcyx + c * odimyx + (y - pad_size) * odimx + (x - pad_size);
@@ -236,10 +236,10 @@ __global__ void Correlation_backward_input2(int item, float *gradInput2, int nIn
 
     float nelems = kernel_size * kernel_size * nInputChannels;
 
-    __shared__ float prod_sum[CUDA_NUM_THREADS];
+    __shared__ float prod_sum[THREADS_PER_BLOCK];
     prod_sum[tch_off] = 0;
 
-    for (int tc = tch_off; tc < nOutputChannels; tc += CUDA_NUM_THREADS) {
+    for (int tc = tch_off; tc < nOutputChannels; tc += THREADS_PER_BLOCK) {
       int i2 = (tc % displacement_size - displacement_rad) * stride2;
       int j2 = (tc / displacement_size - displacement_rad) * stride2;
 
@@ -280,7 +280,7 @@ __global__ void Correlation_backward_input2(int item, float *gradInput2, int nIn
 
     if(tch_off == 0) {
       float reduce_sum = 0;
-      for(int idx = 0; idx < CUDA_NUM_THREADS; idx++) {
+      for(int idx = 0; idx < THREADS_PER_BLOCK; idx++) {
           reduce_sum += prod_sum[idx];
       }
       const int indx2 = n * odimcyx + c * odimyx + (y - pad_size) * odimx + (x - pad_size);
@@ -435,7 +435,7 @@ int Correlation_backward_cuda_kernel(
     channels_first<<<blocks_grid,threads_block, 0, stream>>> (input1, rInput1, nInputChannels,inputHeight, inputWidth, pad_size);
     channels_first<<<blocks_grid,threads_block, 0, stream>>> (input2, rInput2, nInputChannels, inputHeight, inputWidth, pad_size);
 
-    dim3 threadsPerBlock(CUDA_NUM_THREADS);
+    dim3 threadsPerBlock(THREADS_PER_BLOCK);
     dim3 totalBlocksCorr(inputHeight, inputWidth, nInputChannels);
 
     for (int n = 0; n < num; ++n) {
