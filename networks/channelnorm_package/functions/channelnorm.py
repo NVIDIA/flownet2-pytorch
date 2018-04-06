@@ -12,6 +12,7 @@ class ChannelNormFunction(Function):
 
         channelnorm.ChannelNorm_cuda_forward(input1, output, norm_deg)
         ctx.save_for_backward(input1, output)
+        ctx.norm_deg = norm_deg
 
         return output
 

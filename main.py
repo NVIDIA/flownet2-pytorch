@@ -32,8 +32,8 @@ if __name__ == '__main__':
     parser.add_argument('--schedule_lr_fraction', type=float, default=10)
     parser.add_argument("--rgb_max", type=float, default = 255.)
 
-    parser.add_argument('--number_workers', '-nw', '--num_workers', type=int, default=4)
-    parser.add_argument('--number_gpus', '-ng', type=int, default=1, help='number of GPUs to use')
+    parser.add_argument('--number_workers', '-nw', '--num_workers', type=int, default=8)
+    parser.add_argument('--number_gpus', '-ng', type=int, default=-1, help='number of GPUs to use')
     parser.add_argument('--no_cuda', action='store_true')
 
     parser.add_argument('--seed', type=int, default=1)
@@ -85,7 +85,8 @@ if __name__ == '__main__':
     # Parse the official arguments
     with tools.TimerBlock("Parsing Arguments") as block:
         args = parser.parse_args()
-        
+        if args.number_gpus < 0 : args.number_gpus = torch.cuda.device_count()
+
         # Get argument defaults (hastag #thisisahack)
         parser.add_argument('--IGNORE',  action='store_true')
         defaults = vars(parser.parse_args(['--IGNORE']))
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         args.cuda = not args.no_cuda and torch.cuda.is_available()
         args.current_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
         args.log_file = join(args.save, 'args.txt')
-        
+
         # dict to collect activation gradients (for training debug purpose)
         args.grads = {}
 
@@ -118,16 +119,21 @@ if __name__ == '__main__':
             args.inference_dir = "{}/inference".format(args.save)
 
     print('Source Code')
-    print('  Current Git Hash: {}\n'.format(args.current_hash))
+    print(('  Current Git Hash: {}\n'.format(args.current_hash)))
 
     # Change the title for `top` and `pkill` commands
     setproctitle.setproctitle(args.save)
 
     # Dynamically load the dataset class with parameters passed in via "--argument_[param]=[value]" arguments
     with tools.TimerBlock("Initializing Datasets") as block:
-        args.effective_batch_size = args.batch_size
-        args.batch_size = args.effective_batch_size // args.number_gpus
-        gpuargs = {'num_workers': args.number_workers, 'pin_memory': True} if args.cuda else {}
+        args.effective_batch_size = args.batch_size * args.number_gpus
+        args.effective_inference_batch_size = args.inference_batch_size * args.number_gpus
+        args.effective_number_workers = args.number_workers * args.number_gpus
+        gpuargs = {'num_workers': args.effective_number_workers, 
+                   'pin_memory': True, 
+                   'drop_last' : True} if args.cuda else {}
+        inf_gpuargs = gpuargs.copy()
+        inf_gpuargs['num_workers'] = args.number_workers
 
         if exists(args.training_dataset_root):
             train_dataset = args.training_dataset_class(args, True, **tools.kwargs_from_args(args, 'training_dataset'))
@@ -148,7 +154,7 @@ if __name__ == '__main__':
             block.log('Inference Dataset: {}'.format(args.inference_dataset))
             block.log('Inference Input: {}'.format(' '.join([str([d for d in x.size()]) for x in inference_dataset[0][0]])))
             block.log('Inference Targets: {}'.format(' '.join([str([d for d in x.size()]) for x in inference_dataset[0][1]])))
-            inference_loader = DataLoader(inference_dataset, batch_size=args.inference_batch_size, shuffle=False, **gpuargs)
+            inference_loader = DataLoader(inference_dataset, batch_size=args.effective_inference_batch_size, shuffle=False, **inf_gpuargs)
 
     # Dynamically load model and loss class with parameters passed in via "--model_[param]=[value]" or "--loss_[param]=[value]" arguments
     with tools.TimerBlock("Building {} model".format(args.model)) as block:
@@ -224,10 +230,10 @@ if __name__ == '__main__':
     with tools.TimerBlock("Initializing {} Optimizer".format(args.optimizer)) as block:
         kwargs = tools.kwargs_from_args(args, 'optimizer')
         if args.fp16:
-            optimizer = args.optimizer_class(filter(lambda p: p.requires_grad, param_copy), **kwargs)
+            optimizer = args.optimizer_class([p for p in param_copy if p.requires_grad], **kwargs)
         else:
-            optimizer = args.optimizer_class(filter(lambda p: p.requires_grad, model_and_loss.parameters()), **kwargs)
-        for param, default in kwargs.items():
+            optimizer = args.optimizer_class([p for p in model_and_loss.parameters() if p.requires_grad], **kwargs)
+        for param, default in list(kwargs.items()):
             block.log("{} = {} ({})".format(param, default, type(default)))
 
     # Log all arguments to file
@@ -253,7 +259,7 @@ if __name__ == '__main__':
         last_log_time = progress._time()
         for batch_idx, (data, target) in enumerate(progress):
 
-            data, target = [Variable(d, volatile = is_validate) for d in data], [Variable(t, volatile = is_validate) for t in target]
+            data, target = [Variable(d) for d in data], [Variable(t) for t in target]
             if args.cuda and args.number_gpus == 1:
                 data, target = [d.cuda(async=True) for d in data], [t.cuda(async=True) for t in target]
 
@@ -335,9 +341,9 @@ if __name__ == '__main__':
     def inference(args, epoch, data_loader, model, offset=0):
 
         model.eval()
-
+        
         if args.save_flow or args.render_validation:
-            flow_folder = "{}/{}.epoch-{}-flow-field".format(args.inference_dir,args.name.replace('/', '.'),epoch)
+            flow_folder = "{}/inference/{}.epoch-{}-flow-field".format(args.save,args.name.replace('/', '.'),epoch)
             if not os.path.exists(flow_folder):
                 os.makedirs(flow_folder)
 
@@ -352,12 +358,13 @@ if __name__ == '__main__':
         for batch_idx, (data, target) in enumerate(progress):
             if args.cuda:
                 data, target = [d.cuda(async=True) for d in data], [t.cuda(async=True) for t in target]
-            data, target = [Variable(d, volatile = True) for d in data], [Variable(t, volatile = True) for t in target]
+            data, target = [Variable(d) for d in data], [Variable(t) for t in target]
 
             # when ground-truth flows are not available for inference_dataset, 
             # the targets are set to all zeros. thus, losses are actually L1 or L2 norms of compute optical flows, 
             # depending on the type of loss norm passed in
-            losses, output = model(data[0], target[0], inference=True)
+            with torch.no_grad():
+                losses, output = model(data[0], target[0], inference=True)
 
             losses = [torch.mean(loss_value) for loss_value in losses] 
             loss_val = losses[0] # Collect first loss for weight update
@@ -386,7 +393,7 @@ if __name__ == '__main__':
 
     # Primary epoch loop
     best_err = 1e8
-    progress = tqdm(range(args.start_epoch, args.total_epochs + 1), miniters=1, ncols=100, desc='Overall Progress', leave=True, position=0)
+    progress = tqdm(list(range(args.start_epoch, args.total_epochs + 1)), miniters=1, ncols=100, desc='Overall Progress', leave=True, position=0)
     offset = 1
     last_epoch_time = progress._time()
     global_iteration = 0

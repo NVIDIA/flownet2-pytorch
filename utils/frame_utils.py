@@ -1,7 +1,7 @@
 import numpy as np
 from os.path import *
 from scipy.misc import imread
-import flow_utils 
+from . import flow_utils 
 
 def read_gen(file_name):
     ext = splitext(file_name)[-1]

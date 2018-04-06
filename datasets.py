@@ -25,7 +25,7 @@ class StaticCenterCrop(object):
         self.th, self.tw = crop_size
         self.h, self.w = image_size
     def __call__(self, img):
-        return img[(self.h-self.th)/2:(self.h+self.th)/2, (self.w-self.tw)/2:(self.w+self.tw)/2,:]
+        return img[(self.h-self.th)//2:(self.h+self.th)//2, (self.w-self.tw)//2:(self.w+self.tw)//2,:]
 
 class MpiSintel(data.Dataset):
     def __init__(self, args, is_cropped = False, root = '', dstype = 'clean', replicates = 1):
@@ -66,8 +66,8 @@ class MpiSintel(data.Dataset):
         self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
         if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (self.frame_size[0]%64) or (self.frame_size[1]%64):
-            self.render_size[0] = ( (self.frame_size[0])/64 ) * 64
-            self.render_size[1] = ( (self.frame_size[1])/64 ) * 64
+            self.render_size[0] = ( (self.frame_size[0])//64 ) * 64
+            self.render_size[1] = ( (self.frame_size[1])//64 ) * 64
 
         args.inference_size = self.render_size
 
@@ -89,7 +89,7 @@ class MpiSintel(data.Dataset):
             cropper = StaticRandomCrop(image_size, self.crop_size)
         else:
             cropper = StaticCenterCrop(image_size, self.render_size)
-        images = map(cropper, images)
+        images = list(map(cropper, images))
         flow = cropper(flow)
 
         images = np.array(images).transpose(3,0,1,2)
@@ -123,7 +123,7 @@ class FlyingChairs(data.Dataset):
 
     self.flow_list = sorted( glob( join(root, '*.flo') ) )
 
-    assert (len(images)/2 == len(self.flow_list))
+    assert (len(images)//2 == len(self.flow_list))
 
     self.image_list = []
     for i in range(len(self.flow_list)):
@@ -138,8 +138,8 @@ class FlyingChairs(data.Dataset):
     self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
     if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (self.frame_size[0]%64) or (self.frame_size[1]%64):
-        self.render_size[0] = ( (self.frame_size[0])/64 ) * 64
-        self.render_size[1] = ( (self.frame_size[1])/64 ) * 64
+        self.render_size[0] = ( (self.frame_size[0])//64 ) * 64
+        self.render_size[1] = ( (self.frame_size[1])//64 ) * 64
 
     args.inference_size = self.render_size
 
@@ -157,7 +157,7 @@ class FlyingChairs(data.Dataset):
         cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
         cropper = StaticCenterCrop(image_size, self.render_size)
-    images = map(cropper, images)
+    images = list(map(cropper, images))
     flow = cropper(flow)
 
 
@@ -205,8 +205,8 @@ class FlyingThings(data.Dataset):
     self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
     if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (self.frame_size[0]%64) or (self.frame_size[1]%64):
-        self.render_size[0] = ( (self.frame_size[0])/64 ) * 64
-        self.render_size[1] = ( (self.frame_size[1])/64 ) * 64
+        self.render_size[0] = ( (self.frame_size[0])//64 ) * 64
+        self.render_size[1] = ( (self.frame_size[1])//64 ) * 64
 
     args.inference_size = self.render_size
 
@@ -224,7 +224,7 @@ class FlyingThings(data.Dataset):
         cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
         cropper = StaticCenterCrop(image_size, self.render_size)
-    images = map(cropper, images)
+    images = list(map(cropper, images))
     flow = cropper(flow)
 
 
@@ -274,8 +274,8 @@ class ChairsSDHom(data.Dataset):
     self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
     if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (self.frame_size[0]%64) or (self.frame_size[1]%64):
-        self.render_size[0] = ( (self.frame_size[0])/64 ) * 64
-        self.render_size[1] = ( (self.frame_size[1])/64 ) * 64
+        self.render_size[0] = ( (self.frame_size[0])//64 ) * 64
+        self.render_size[1] = ( (self.frame_size[1])//64 ) * 64
 
     args.inference_size = self.render_size
 
@@ -294,7 +294,7 @@ class ChairsSDHom(data.Dataset):
         cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
         cropper = StaticCenterCrop(image_size, self.render_size)
-    images = map(cropper, images)
+    images = list(map(cropper, images))
     flow = cropper(flow)
 
 
@@ -337,8 +337,8 @@ class ImagesFromFolder(data.Dataset):
     self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
     if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (self.frame_size[0]%64) or (self.frame_size[1]%64):
-        self.render_size[0] = ( (self.frame_size[0])/64 ) * 64
-        self.render_size[1] = ( (self.frame_size[1])/64 ) * 64
+        self.render_size[0] = ( (self.frame_size[0])//64 ) * 64
+        self.render_size[1] = ( (self.frame_size[1])//64 ) * 64
 
     args.inference_size = self.render_size
 
@@ -354,7 +354,7 @@ class ImagesFromFolder(data.Dataset):
         cropper = StaticRandomCrop(image_size, self.crop_size)
     else:
         cropper = StaticCenterCrop(image_size, self.render_size)
-    images = map(cropper, images)
+    images = list(map(cropper, images))
     
     images = np.array(images).transpose(3,0,1,2)
     images = torch.from_numpy(images.astype(np.float32))

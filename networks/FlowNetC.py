@@ -5,9 +5,9 @@ from torch.nn import init
 import math
 import numpy as np
 
-from correlation_package.modules.correlation import Correlation
+from .correlation_package.modules.correlation import Correlation
 
-from submodules import *
+from .submodules import *
 'Parameter count , 39,175,298 '
 
 class FlowNetC(nn.Module):

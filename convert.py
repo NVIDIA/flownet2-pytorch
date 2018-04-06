@@ -49,10 +49,10 @@ net = caffe.Net(prototxt.name, args.caffe_model, caffe.TEST)
 weights = {}
 biases = {}
 
-for k, v in net.params.items():
+for k, v in list(net.params.items()):
     weights[k] = np.array(v[0].data).reshape(v[0].data.shape)
     biases[k] = np.array(v[1].data).reshape(v[1].data.shape)
-    print (k, weights[k].shape, biases[k].shape)
+    print((k, weights[k].shape, biases[k].shape))
 
 if 'FlowNet2/' in args.caffe_model:
     model = models.FlowNet2(args)
@@ -132,6 +132,6 @@ elif 'FlowNet2-SD/' in args.caffe_model:
     torch.save(state, os.path.join(args.flownet2_pytorch, 'FlowNet2-SD_checkpoint.pth.tar'))
 
 else:
-    print 'model type cound not be determined from input caffe model %s'%(args.caffe_model)
+    print(('model type cound not be determined from input caffe model %s'%(args.caffe_model)))
     quit()
-print ("done converting ", args.caffe_model)
+print(("done converting ", args.caffe_model))
