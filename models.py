@@ -107,23 +107,27 @@ class FlowNet2(nn.Module):
         return 
 
     def forward(self, inputs):
+        # input format: 5d tensor, (batch, rgb, img #, x, y)
+        # normalizing imgs
         rgb_mean = inputs.contiguous().view(inputs.size()[:2]+(-1,)).mean(dim=-1).view(inputs.size()[:2] + (1,1,1,))
-        
         x = (inputs - rgb_mean) / self.rgb_max
+
+        # squish the img # dimension by concatenating the rgb channels
         x1 = x[:,:,0,:,:]
         x2 = x[:,:,1,:,:]
         x = torch.cat((x1,x2), dim = 1)
 
         # flownetc
-        flownetc_flow2 = self.flownetc(x)[0]
+        flownetc_flow2 = self.flownetc(x)[0]  # only return flow2, since the network returns flow6 to flow2
         flownetc_flow = self.upsample1(flownetc_flow2*self.div_flow)
         
-        # warp img1 to img0; magnitude of diff between img0 and and warped_img1, 
+        # warp img1 to img0; magnitude of diff between img0 and and warped_img1, i.e. brightness error
+        # combine the flow with img1 to 'reconstruct' img0
         resampled_img1 = self.resample1(x[:,3:,:,:], flownetc_flow)
-        diff_img0 = x[:,:3,:,:] - resampled_img1 
+        diff_img0 = x[:,:3,:,:] - resampled_img1  # brightness error
         norm_diff_img0 = self.channelnorm(diff_img0)
 
-        # concat img0, img1, img1->img0, flow, diff-mag ; 
+        # concat img0, img1, warped img1, flow, normalized brightness error
         concat1 = torch.cat((x, resampled_img1, flownetc_flow/self.div_flow, norm_diff_img0), dim=1)
         
         # flownets1
