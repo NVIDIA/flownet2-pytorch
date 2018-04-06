@@ -1,41 +1,36 @@
-import torch
-from torch.autograd import Function
+from torch.autograd import Function, Variable
 from .._ext import resample2d
 
 
 class Resample2dFunction(Function):
 
-    def __init__(self, kernel_size=1):
-        super(Resample2dFunction, self).__init__()
-        self.kernel_size = kernel_size
+    @staticmethod
+    def forward(ctx, input1, input2, kernel_size=1):
+        assert input1.is_contiguous()
+        assert input2.is_contiguous()
 
-    def forward(self, input1, input2):
-        self.save_for_backward(input1, input2)
+        ctx.save_for_backward(input1, input2)
+        ctx.kernel_size = kernel_size
 
-        assert(input1.is_contiguous() == True)
-        assert(input2.is_contiguous() == True)
+        _, d, _, _ = input1.size()
+        b, _, h, w = input2.size()
+        output = input1.new(b, d, h, w).zero_()
 
-        with torch.cuda.device_of(input1):
-            _, d, _, _ = input1.size() 
-            b, _, h, w = input2.size()
-            output = input1.new().resize_(b, d, h, w).zero_()
-
-            resample2d.Resample2d_cuda_forward(input1, input2, output, self.kernel_size)
+        resample2d.Resample2d_cuda_forward(input1, input2, output, kernel_size)
 
         return output
 
-    def backward(self, gradOutput):
-        input1, input2 = self.saved_tensors
+    @staticmethod
+    def backward(ctx, grad_output):
+        assert grad_output.is_contiguous()
 
-        assert(gradOutput.is_contiguous() == True)
-        
-        with torch.cuda.device_of(input1):
-            b, c, h, w = input1.size()
-            gradInput1 = input1.new().resize_(b,c,h,w).zero_()
+        input1, input2 = ctx.saved_tensors
 
-            b, c, h, w = input2.size()
-            gradInput2 = input2.new().resize_(b,c,h,w).zero_()
+        grad_input1 = Variable(input1.new(input1.size()).zero_())
+        grad_input2 = Variable(input1.new(input2.size()).zero_())
 
-            resample2d.Resample2d_cuda_backward(input1, input2, gradOutput, gradInput1, gradInput2, self.kernel_size)
+        resample2d.Resample2d_cuda_backward(input1, input2, grad_output.data,
+                                            grad_input1.data, grad_input2.data,
+                                            ctx.kernel_size)
 
-        return gradInput1, gradInput2
+        return grad_input1, grad_input2, None

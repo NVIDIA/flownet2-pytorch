@@ -1,35 +1,27 @@
-import torch
-from torch.autograd import Function
+from torch.autograd import Function, Variable
 from .._ext import channelnorm
 
 
 class ChannelNormFunction(Function):
 
-    def __init__(self, norm_deg=2):
-        super(ChannelNormFunction, self).__init__()
-        self.norm_deg = norm_deg
+    @staticmethod
+    def forward(ctx, input1, norm_deg=2):
+        assert input1.is_contiguous()
+        b, _, h, w = input1.size()
+        output = input1.new(b, 1, h, w).zero_()
 
-    def forward(self, input1):
-        # self.save_for_backward(input1)
-
-        assert(input1.is_contiguous() == True)
-
-        with torch.cuda.device_of(input1):
-            b, _, h, w = input1.size()
-            output = input1.new().resize_(b, 1, h, w).zero_()
-
-            channelnorm.ChannelNorm_cuda_forward(input1, output, self.norm_deg)
-        self.save_for_backward(input1, output)
+        channelnorm.ChannelNorm_cuda_forward(input1, output, norm_deg)
+        ctx.save_for_backward(input1, output)
 
         return output
 
-    def backward(self, gradOutput):
-        input1, output = self.saved_tensors
+    @staticmethod
+    def backward(ctx, grad_output):
+        input1, output = ctx.saved_tensors
 
-        with torch.cuda.device_of(input1):
-            b, c, h, w = input1.size()
-            gradInput1 = input1.new().resize_(b,c,h,w).zero_()
+        grad_input1 = Variable(input1.new(input1.size()).zero_())
 
-            channelnorm.ChannelNorm_cuda_backward(input1, output, gradOutput, gradInput1, self.norm_deg)
+        channelnorm.ChannelNorm_cuda_backward(input1, output, grad_output.data,
+                                              grad_input1.data, ctx.norm_deg)
 
-        return gradInput1
+        return grad_input1, None
