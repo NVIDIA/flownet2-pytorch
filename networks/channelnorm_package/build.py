@@ -24,7 +24,8 @@ ffi = torch.utils.ffi.create_extension(
     package=False,
     relative_to=this_folder,
     define_macros=Defines,
-    extra_objects=[os.path.join(this_folder, Object) for Object in Objects]
+    extra_objects=[os.path.join(this_folder, Object) for Object in Objects],
+    extra_compile_args=['-std=c99']
 )
 
 if __name__ == '__main__':
