@@ -1,21 +1,28 @@
 #include <stdio.h>
 
-#include "correlation_cuda_kernel.h"
-
-#define real float
+#include "correlation_cuda_kernel.cuh"
 
 #define CUDA_NUM_THREADS 1024
 #define THREADS_PER_BLOCK 32
 
-__global__ void channels_first(float* input, float* rinput, int channels, int height, int width, int pad_size)
+#include <ATen/ATen.h>
+#include <ATen/NativeFunctions.h>
+#include <ATen/Dispatch.h>
+#include <ATen/cuda/CUDAApplyUtils.cuh>
+
+using at::Half;
+
+template <typename scalar_t>
+__global__ void channels_first(const scalar_t* __restrict__ input, scalar_t* rinput, int channels, int height, int width, int pad_size)
 {
+
     // n (batch size), c (num of channels), y (height), x (width)
     int n = blockIdx.x;
     int y = blockIdx.y;
     int x = blockIdx.z;
 
     int ch_off = threadIdx.x;
-    float value;
+    scalar_t value;
 
     int dimcyx = channels * height * width;
     int dimyx = height * width;
@@ -31,9 +38,10 @@ __global__ void channels_first(float* input, float* rinput, int channels, int he
     }
 }
 
-__global__ void Correlation_forward( float *output, int nOutputChannels, int outputHeight, int outputWidth, 
-                                     float *rInput1, int nInputChannels, int inputHeight, int inputWidth, 
-                                     float *rInput2,
+template <typename scalar_t>
+__global__ void correlation_forward( scalar_t*  output, int nOutputChannels, int outputHeight, int outputWidth, 
+                                     const scalar_t* __restrict__ rInput1, int nInputChannels, int inputHeight, int inputWidth, 
+                                     const scalar_t* __restrict__ rInput2,
                                      int pad_size,
                                      int kernel_size,
                                      int max_displacement,
@@ -50,8 +58,8 @@ __global__ void Correlation_forward( float *output, int nOutputChannels, int out
     int displacement_size = 2 * displacement_rad + 1;
 
     int n  = blockIdx.x;
-    int y1 = blockIdx.y * stride1 + max_displacement + kernel_rad;
-    int x1 = blockIdx.z * stride1 + max_displacement + kernel_rad;
+    int y1 = blockIdx.y * stride1 + max_displacement;
+    int x1 = blockIdx.z * stride1 + max_displacement;
     int c = threadIdx.x;
 
     int pdimyxc = pInputHeight * pInputWidth * nInputChannels;
@@ -62,9 +70,9 @@ __global__ void Correlation_forward( float *output, int nOutputChannels, int out
     int tdimyx = outputHeight * outputWidth;
     int tdimx = outputWidth;
 
-    float nelems = kernel_size * kernel_size * pdimc;
+    scalar_t nelems = kernel_size * kernel_size * pdimc;
 
-    __shared__ float prod_sum[THREADS_PER_BLOCK];
+    __shared__ scalar_t prod_sum[THREADS_PER_BLOCK];
 
     // no significant speed-up in using chip memory for input1 sub-data, 
     // not enough chip memory size to accomodate memory per block for input2 sub-data
@@ -91,7 +99,7 @@ __global__ void Correlation_forward( float *output, int nOutputChannels, int out
         // accumulate 
         __syncthreads();
         if (c == 0) {
-          float reduce_sum = 0;
+          scalar_t reduce_sum = 0;
           for (int index = 0; index < THREADS_PER_BLOCK; ++index) {
             reduce_sum += prod_sum[index];
           }
@@ -105,9 +113,10 @@ __global__ void Correlation_forward( float *output, int nOutputChannels, int out
 
 }
 
-__global__ void Correlation_backward_input1(int item, float *gradInput1, int nInputChannels, int inputHeight, int inputWidth, 
-                                            float *gradOutput, int nOutputChannels, int outputHeight, int outputWidth, 
-                                            float *rInput2, 
+template <typename scalar_t>
+__global__ void correlation_backward_input1(int item, scalar_t* gradInput1, int nInputChannels, int inputHeight, int inputWidth, 
+                                            const scalar_t* __restrict__ gradOutput, int nOutputChannels, int outputHeight, int outputWidth, 
+                                            const scalar_t* __restrict__ rInput2, 
                                             int pad_size,
                                             int kernel_size,
                                             int max_displacement,
@@ -163,9 +172,9 @@ __global__ void Correlation_backward_input1(int item, float *gradInput1, int nIn
     int odimyx = inputHeight * inputWidth;
     int odimx = inputWidth;
 
-    float nelems = kernel_size * kernel_size * nInputChannels;
+    scalar_t nelems = kernel_size * kernel_size * nInputChannels;
 
-    __shared__ float prod_sum[THREADS_PER_BLOCK];
+    __shared__ scalar_t prod_sum[THREADS_PER_BLOCK];
     prod_sum[tch_off] = 0;
 
     for (int tc = tch_off; tc < nOutputChannels; tc += THREADS_PER_BLOCK) {
@@ -175,7 +184,7 @@ __global__ void Correlation_backward_input1(int item, float *gradInput1, int nIn
 
       int indx2 = n * pdimyxc + (y + j2)* pdimxc + (x + i2) * pdimc + c;
       
-      float val2 = rInput2[indx2];
+      scalar_t val2 = rInput2[indx2];
 
       for (int j = ymin; j <= ymax; ++j) {
         for (int i = xmin; i <= xmax; ++i) {
@@ -187,7 +196,7 @@ __global__ void Correlation_backward_input1(int item, float *gradInput1, int nIn
     __syncthreads();
 
     if(tch_off == 0) {
-      float reduce_sum = 0;
+      scalar_t reduce_sum = 0;
       for(int idx = 0; idx < THREADS_PER_BLOCK; idx++) {
           reduce_sum += prod_sum[idx];
       }
@@ -197,9 +206,10 @@ __global__ void Correlation_backward_input1(int item, float *gradInput1, int nIn
 
 }
 
-__global__ void Correlation_backward_input2(int item, float *gradInput2, int nInputChannels, int inputHeight, int inputWidth,
-                                            float *gradOutput, int nOutputChannels, int outputHeight, int outputWidth,
-                                            float *rInput1,
+template <typename scalar_t>
+__global__ void correlation_backward_input2(int item, scalar_t*  gradInput2, int nInputChannels, int inputHeight, int inputWidth,
+                                            const scalar_t* __restrict__ gradOutput, int nOutputChannels, int outputHeight, int outputWidth,
+                                            const scalar_t* __restrict__ rInput1,
                                             int pad_size,
                                             int kernel_size,
                                             int max_displacement,
@@ -234,9 +244,9 @@ __global__ void Correlation_backward_input2(int item, float *gradInput2, int nIn
     int odimyx = inputHeight * inputWidth;
     int odimx = inputWidth;
 
-    float nelems = kernel_size * kernel_size * nInputChannels;
+    scalar_t nelems = kernel_size * kernel_size * nInputChannels;
 
-    __shared__ float prod_sum[THREADS_PER_BLOCK];
+    __shared__ scalar_t prod_sum[THREADS_PER_BLOCK];
     prod_sum[tch_off] = 0;
 
     for (int tc = tch_off; tc < nOutputChannels; tc += THREADS_PER_BLOCK) {
@@ -266,7 +276,7 @@ __global__ void Correlation_backward_input2(int item, float *gradInput2, int nIn
       ymax = min(outputHeight-1,ymax);
       
       int indx1 = n * pdimyxc + (y - j2)* pdimxc + (x - i2) * pdimc + c;
-      float val1 = rInput1[indx1];
+      scalar_t val1 = rInput1[indx1];
 
       for (int j = ymin; j <= ymax; ++j) {
         for (int i = xmin; i <= xmax; ++i) {
@@ -279,7 +289,7 @@ __global__ void Correlation_backward_input2(int item, float *gradInput2, int nIn
     __syncthreads();
 
     if(tch_off == 0) {
-      float reduce_sum = 0;
+      scalar_t reduce_sum = 0;
       for(int idx = 0; idx < THREADS_PER_BLOCK; idx++) {
           reduce_sum += prod_sum[idx];
       }
@@ -289,46 +299,43 @@ __global__ void Correlation_backward_input2(int item, float *gradInput2, int nIn
 
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int correlation_forward_cuda_kernel(at::Tensor& output,
+                                    int ob,
+                                    int oc,
+                                    int oh,
+                                    int ow,
+                                    int osb,
+                                    int osc,
+                                    int osh,
+                                    int osw,
 
-int Correlation_forward_cuda_kernel(/*THCudaTensor_data(state, output)*/ float *output,
-                                    /*THCudaTensor_size(state, output, 0)*/ int ob,
-                                    /*THCudaTensor_size(state, output, 1)*/ int oc,
-                                    /*THCudaTensor_size(state, output, 2)*/ int oh,
-                                    /*THCudaTensor_size(state, output, 3)*/ int ow,
-                                    /*THCudaTensor_stride(state, output, 0)*/ int osb,
-                                    /*THCudaTensor_stride(state, output, 1)*/ int osc,
-                                    /*THCudaTensor_stride(state, output, 2)*/ int osh,
-                                    /*THCudaTensor_stride(state, output, 3)*/ int osw,
+                                    at::Tensor& input1,
+                                    int ic,
+                                    int ih,
+                                    int iw,
+                                    int isb,
+                                    int isc,
+                                    int ish,
+                                    int isw,
 
-                                    /*THCudaTensor_data(state, input1)*/ float *input1,
-                                    /*THCudaTensor_size(state, input1, 1)*/ int ic,
-                                    /*THCudaTensor_size(state, input1, 2)*/ int ih,
-                                    /*THCudaTensor_size(state, input1, 3)*/ int iw,
-                                    /*THCudaTensor_stride(state, input1, 0)*/ int isb,
-                                    /*THCudaTensor_stride(state, input1, 1)*/ int isc,
-                                    /*THCudaTensor_stride(state, input1, 2)*/ int ish,
-                                    /*THCudaTensor_stride(state, input1, 3)*/ int isw,
+                                    at::Tensor& input2,
+                                    int gc,
+                                    int gsb,
+                                    int gsc,
+                                    int gsh,
+                                    int gsw,
 
-                                    /*THCudaTensor_data(state, input2)*/ float *input2,
-                                    /*THCudaTensor_size(state, input2, 1)*/ int gc,
-                                    /*THCudaTensor_stride(state, input2, 0)*/ int gsb,
-                                    /*THCudaTensor_stride(state, input2, 1)*/ int gsc,
-                                    /*THCudaTensor_stride(state, input2, 2)*/ int gsh,
-                                    /*THCudaTensor_stride(state, input2, 3)*/ int gsw,
-
-                                    /*THCudaTensor_data(state, rInput1)*/ float *rInput1,
-                                    /*THCudaTensor_data(state, rInput2)*/ float *rInput2,
+                                    at::Tensor& rInput1,
+                                    at::Tensor& rInput2,
                                     int pad_size,
                                     int kernel_size,
                                     int max_displacement,
                                     int stride1,
                                     int stride2,
                                     int corr_type_multiply,
-                                    /*THCState_getCurrentStream(state)*/ cudaStream_t stream)
+                                    cudaStream_t stream) 
 {
+
    int batchSize = ob;
 
    int nInputChannels = ic;
@@ -342,80 +349,98 @@ int Correlation_forward_cuda_kernel(/*THCudaTensor_data(state, output)*/ float *
    dim3 blocks_grid(batchSize, inputHeight, inputWidth);
    dim3 threads_block(THREADS_PER_BLOCK);
 
-  channels_first<<<blocks_grid,threads_block, 0, stream>>> (input1,rInput1, nInputChannels, inputHeight, inputWidth,pad_size);
-  channels_first<<<blocks_grid,threads_block, 0, stream>>> (input2,rInput2, nInputChannels, inputHeight, inputWidth, pad_size);
+  AT_DISPATCH_FLOATING_TYPES_AND_HALF(input1.type(), "channels_first_fwd_1", ([&] {
+
+  channels_first<scalar_t><<<blocks_grid,threads_block, 0, stream>>>(
+      input1.data<scalar_t>(), rInput1.data<scalar_t>(), nInputChannels, inputHeight, inputWidth, pad_size);
+
+  }));
+
+  AT_DISPATCH_FLOATING_TYPES_AND_HALF(input2.type(), "channels_first_fwd_2", ([&] {
+
+  channels_first<scalar_t><<<blocks_grid,threads_block, 0, stream>>> (
+      input2.data<scalar_t>(), rInput2.data<scalar_t>(), nInputChannels, inputHeight, inputWidth, pad_size);
+
+  }));
 
    dim3 threadsPerBlock(THREADS_PER_BLOCK);
    dim3 totalBlocksCorr(batchSize, outputHeight, outputWidth);
 
-   Correlation_forward <<< totalBlocksCorr, threadsPerBlock, 0, stream >>> 
-                        (output, nOutputChannels, outputHeight, outputWidth,
-                         rInput1, nInputChannels, inputHeight, inputWidth,
-                         rInput2,
+  AT_DISPATCH_FLOATING_TYPES_AND_HALF(input1.type(), "correlation_forward", ([&] {
+
+   correlation_forward<scalar_t><<<totalBlocksCorr, threadsPerBlock, 0, stream>>> 
+                        (output.data<scalar_t>(), nOutputChannels, outputHeight, outputWidth,
+                         rInput1.data<scalar_t>(), nInputChannels, inputHeight, inputWidth,
+                         rInput2.data<scalar_t>(),
                          pad_size,
                          kernel_size,
                          max_displacement,
                          stride1,
                          stride2);
 
-  // check for errors
+  }));
+
   cudaError_t err = cudaGetLastError();
+
+
+  // check for errors
   if (err != cudaSuccess) {
-    printf("error in Correlation_forward_cuda_kernel: %s\n", cudaGetErrorString(err));
+    printf("error in correlation_forward_cuda_kernel: %s\n", cudaGetErrorString(err));
     return 0;
   }
 
   return 1;
 }
 
-int Correlation_backward_cuda_kernel(
-                                    /*THCudaTensor_data(state, gradOutput)*/    float *gradOutput,
-                                    /*THCudaTensor_size(state, gradOutput, 0)*/ int gob,
-                                    /*THCudaTensor_size(state, gradOutput, 1)*/ int goc,
-                                    /*THCudaTensor_size(state, gradOutput, 2)*/ int goh,
-                                    /*THCudaTensor_size(state, gradOutput, 3)*/ int gow,
-                                    /*THCudaTensor_stride(state, gradOutput, 0)*/ int gosb,
-                                    /*THCudaTensor_stride(state, gradOutput, 1)*/ int gosc,
-                                    /*THCudaTensor_stride(state, gradOutput, 2)*/ int gosh,
-                                    /*THCudaTensor_stride(state, gradOutput, 3)*/ int gosw,
 
-                                    /*THCudaTensor_data(state, input1)*/        float* input1,
-                                    /*THCudaTensor_size(state, input1, 1)*/     int ic,
-                                    /*THCudaTensor_size(state, input1, 2)*/     int ih,
-                                    /*THCudaTensor_size(state, input1, 3)*/     int iw,
-                                    /*THCudaTensor_stride(state, input1, 0)*/   int isb,
-                                    /*THCudaTensor_stride(state, input1, 1)*/   int isc,
-                                    /*THCudaTensor_stride(state, input1, 2)*/   int ish,
-                                    /*THCudaTensor_stride(state, input1, 3)*/   int isw,
+int correlation_backward_cuda_kernel(
+                                    at::Tensor& gradOutput,
+                                    int gob,
+                                    int goc,
+                                    int goh,
+                                    int gow,
+                                    int gosb,
+                                    int gosc,
+                                    int gosh,
+                                    int gosw,
 
-                                    /*THCudaTensor_data(state, input2)*/        float *input2,
-                                    /*THCudaTensor_stride(state, input2, 0)*/   int gsb,
-                                    /*THCudaTensor_stride(state, input2, 1)*/   int gsc,
-                                    /*THCudaTensor_stride(state, input2, 2)*/   int gsh,
-                                    /*THCudaTensor_stride(state, input2, 3)*/   int gsw,
+                                    at::Tensor& input1,
+                                    int ic,
+                                    int ih,
+                                    int iw,
+                                    int isb,
+                                    int isc,
+                                    int ish,
+                                    int isw,
 
-                                    /*THCudaTensor_data(state, gradInput1)*/    float *gradInput1,
-                                    /*THCudaTensor_stride(state, gradInput1, 0)*/ int gisb,
-                                    /*THCudaTensor_stride(state, gradInput1, 1)*/ int gisc,
-                                    /*THCudaTensor_stride(state, gradInput1, 2)*/ int gish,
-                                    /*THCudaTensor_stride(state, gradInput1, 3)*/ int gisw,
+                                    at::Tensor& input2,
+                                    int gsb,
+                                    int gsc,
+                                    int gsh,
+                                    int gsw,
 
-                                    /*THCudaTensor_data(state, gradInput2)*/      float *gradInput2,
-                                    /*THCudaTensor_size(state, gradInput2, 1)*/   int ggc,
-                                    /*THCudaTensor_stride(state, gradInput2, 0)*/ int ggsb,
-                                    /*THCudaTensor_stride(state, gradInput2, 1)*/ int ggsc,
-                                    /*THCudaTensor_stride(state, gradInput2, 2)*/ int ggsh,
-                                    /*THCudaTensor_stride(state, gradInput2, 3)*/ int ggsw,
+                                    at::Tensor& gradInput1,
+                                    int gisb,
+                                    int gisc,
+                                    int gish,
+                                    int gisw,
 
-                                    /*THCudaTensor_data(state, rInput1)*/             float *rInput1,
-                                    /*THCudaTensor_data(state, rInput2)*/             float *rInput2,
+                                    at::Tensor& gradInput2,
+                                    int ggc,
+                                    int ggsb,
+                                    int ggsc,
+                                    int ggsh,
+                                    int ggsw,
+
+                                    at::Tensor& rInput1,
+                                    at::Tensor& rInput2,
                                     int pad_size,
                                     int kernel_size,
                                     int max_displacement,
                                     int stride1,
                                     int stride2,
                                     int corr_type_multiply,
-                                    /*THCState_getCurrentStream(state)*/cudaStream_t stream)
+                                    cudaStream_t stream)
 {
 
     int batchSize = gob;
@@ -432,46 +457,74 @@ int Correlation_backward_cuda_kernel(
     dim3 blocks_grid(batchSize, inputHeight, inputWidth);
     dim3 threads_block(THREADS_PER_BLOCK);
 
-    channels_first<<<blocks_grid,threads_block, 0, stream>>> (input1, rInput1, nInputChannels,inputHeight, inputWidth, pad_size);
-    channels_first<<<blocks_grid,threads_block, 0, stream>>> (input2, rInput2, nInputChannels, inputHeight, inputWidth, pad_size);
+
+    AT_DISPATCH_FLOATING_TYPES_AND_HALF(input1.type(), "lltm_forward_cuda", ([&] {
+
+        channels_first<scalar_t><<<blocks_grid, threads_block, 0, stream>>>(
+            input1.data<scalar_t>(),
+            rInput1.data<scalar_t>(),
+            nInputChannels,
+            inputHeight,
+            inputWidth,
+            pad_size
+        );
+    }));
+
+    AT_DISPATCH_FLOATING_TYPES_AND_HALF(input2.type(), "lltm_forward_cuda", ([&] {
+
+        channels_first<scalar_t><<<blocks_grid, threads_block, 0, stream>>>(
+            input2.data<scalar_t>(),
+            rInput2.data<scalar_t>(),
+            nInputChannels,
+            inputHeight,
+            inputWidth,
+            pad_size
+        );
+    }));
 
     dim3 threadsPerBlock(THREADS_PER_BLOCK);
     dim3 totalBlocksCorr(inputHeight, inputWidth, nInputChannels);
 
     for (int n = 0; n < num; ++n) {
-        Correlation_backward_input1 << <totalBlocksCorr, threadsPerBlock, 0, stream >> > (
-            n, gradInput1, nInputChannels, inputHeight, inputWidth,
-            gradOutput, nOutputChannels, outputHeight, outputWidth,
-            rInput2,
-            pad_size,
-            kernel_size,
-            max_displacement,
-            stride1,
-            stride2);
+
+      AT_DISPATCH_FLOATING_TYPES_AND_HALF(input2.type(), "lltm_forward_cuda", ([&] {
+
+
+          correlation_backward_input1<scalar_t><<<totalBlocksCorr, threadsPerBlock, 0, stream>>> (
+              n, gradInput1.data<scalar_t>(), nInputChannels, inputHeight, inputWidth,
+              gradOutput.data<scalar_t>(), nOutputChannels, outputHeight, outputWidth,
+              rInput2.data<scalar_t>(),
+              pad_size,
+              kernel_size,
+              max_displacement,
+              stride1,
+              stride2);
+      }));
     }
 
     for(int n = 0; n < batchSize; n++) {
-        Correlation_backward_input2<<<totalBlocksCorr, threadsPerBlock, 0, stream>>>(
-            n, gradInput2, nInputChannels, inputHeight, inputWidth,
-            gradOutput, nOutputChannels, outputHeight, outputWidth,
-            rInput1,
+
+      AT_DISPATCH_FLOATING_TYPES_AND_HALF(rInput1.type(), "lltm_forward_cuda", ([&] {
+
+        correlation_backward_input2<scalar_t><<<totalBlocksCorr, threadsPerBlock, 0, stream>>>(
+            n, gradInput2.data<scalar_t>(), nInputChannels, inputHeight, inputWidth,
+            gradOutput.data<scalar_t>(), nOutputChannels, outputHeight, outputWidth,
+            rInput1.data<scalar_t>(),
             pad_size,
             kernel_size,
             max_displacement,
             stride1,
             stride2);
+
+        }));
     }
 
   // check for errors
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess) {
-    printf("error in Correlation_backward_cuda_kernel: %s\n", cudaGetErrorString(err));
+    printf("error in correlation_backward_cuda_kernel: %s\n", cudaGetErrorString(err));
     return 0;
   }
 
   return 1;
 }
-
-#ifdef __cplusplus
-}
-#endif

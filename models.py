@@ -5,8 +5,8 @@ from torch.nn import init
 import math
 import numpy as np
 
-from networks.resample2d_package.modules.resample2d import Resample2d
-from networks.channelnorm_package.modules.channelnorm import ChannelNorm
+from networks.resample2d_package.resample2d import Resample2d
+from networks.channelnorm_package.channelnorm import ChannelNorm
 
 from networks import FlowNetC
 from networks import FlowNetS
