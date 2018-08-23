@@ -1,6 +1,6 @@
+from torch.nn.modules.module import Module
 from torch.autograd import Function, Variable
-from .._ext import resample2d
-
+import resample2d_cuda
 
 class Resample2dFunction(Function):
 
@@ -16,7 +16,7 @@ class Resample2dFunction(Function):
         b, _, h, w = input2.size()
         output = input1.new(b, d, h, w).zero_()
 
-        resample2d.Resample2d_cuda_forward(input1, input2, output, kernel_size)
+        resample2d_cuda.forward(input1, input2, output, kernel_size)
 
         return output
 
@@ -29,8 +29,18 @@ class Resample2dFunction(Function):
         grad_input1 = Variable(input1.new(input1.size()).zero_())
         grad_input2 = Variable(input1.new(input2.size()).zero_())
 
-        resample2d.Resample2d_cuda_backward(input1, input2, grad_output.data,
-                                            grad_input1.data, grad_input2.data,
-                                            ctx.kernel_size)
+        resample2d_cuda.backward(input1, input2, grad_output.data,
+                                 grad_input1.data, grad_input2.data,
+                                 ctx.kernel_size)
 
         return grad_input1, grad_input2, None
+
+class Resample2d(Module):
+
+    def __init__(self, kernel_size=1):
+        super(Resample2d, self).__init__()
+        self.kernel_size = kernel_size
+
+    def forward(self, input1, input2):
+        input1_c = input1.contiguous()
+        return Resample2dFunction.apply(input1_c, input2, self.kernel_size)

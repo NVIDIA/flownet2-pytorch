@@ -5,7 +5,7 @@ from torch.nn import init
 import math
 import numpy as np
 
-from .correlation_package.modules.correlation import Correlation
+from .correlation_package.correlation import Correlation
 
 from .submodules import *
 'Parameter count , 39,175,298 '
