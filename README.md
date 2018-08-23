@@ -43,6 +43,15 @@ L1 and L2 losses with multi-scale support are available in [losses.py](./losses.
 
     # install custom layers
     bash install.sh
+    
+### Python requirements 
+Currently, the code supports python 3
+* numpy 
+* pytorch ( == 0.4.1, for <= 0.4.0 see branch [python36-PyTorch0.4](https://github.com/NVIDIA/flownet2-pytorch/tree/python36-PyTorch0.4))
+* scipy 
+* scikit-image
+* tensorboardX
+* colorama, tqdm, setproctitle 
 
 ## Docker image
 Libraries and other dependencies for this project include: Ubuntu 16.04, Python 2.7, Pytorch 0.2, CUDNN 6.0, CUDA 8.0
