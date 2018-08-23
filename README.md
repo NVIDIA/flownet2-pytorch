@@ -107,5 +107,9 @@ If you find this implementation useful in your work, please acknowledge it appro
   howpublished = {\url{https://github.com/NVIDIA/flownet2-pytorch}}
 }
 ```
+## Related Optical Flow Work from Nvidia 
+Code (in Caffe and Pytorch): [PWC-Net](https://github.com/NVlabs/PWC-Net) <br />
+Paper : [PWC-Net: CNNs for Optical Flow Using Pyramid, Warping, and Cost Volume](https://arxiv.org/abs/1709.02371). 
+
 ## Acknowledgments
 Parts of this code were derived, as noted in the code, from [ClementPinard/FlowNetPytorch](https://github.com/ClementPinard/FlowNetPytorch).
