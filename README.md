@@ -47,7 +47,7 @@ L1 and L2 losses with multi-scale support are available in [losses.py](./losses.
 ### Python requirements 
 Currently, the code supports python 3
 * numpy 
-* pytorch ( == 0.4.1, for <= 0.4.0 see branch [python36-PyTorch0.4](https://github.com/NVIDIA/flownet2-pytorch/tree/python36-PyTorch0.4))
+* PyTorch ( == 0.4.1, for <= 0.4.0 see branch [python36-PyTorch0.4](https://github.com/NVIDIA/flownet2-pytorch/tree/python36-PyTorch0.4))
 * scipy 
 * scikit-image
 * tensorboardX
@@ -100,7 +100,7 @@ If you find this implementation useful in your work, please acknowledge it appro
 ````
 ```
 @misc{flownet2-pytorch,
-  author = {Fitsum Reda and Jon Barker and Bryan Catanzaro},
+  author = {Fitsum Reda and Robert Pottorff and Jon Barker and Bryan Catanzaro},
   title = {flownet2-pytorch: Pytorch implementation of FlowNet 2.0: Evolution of Optical Flow Estimation with Deep Networks},
   year = {2017},
   publisher = {GitHub},
