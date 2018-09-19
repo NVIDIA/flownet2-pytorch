@@ -1,6 +1,7 @@
 import numpy as np
 
 TAG_CHAR = np.array([202021.25], np.float32)
+TAG_FLOAT = 202021.25
 
 def readFlow(fn):
     """ Read .flo file in Middlebury format"""
@@ -53,3 +54,71 @@ def writeFlow(filename,uv,v=None):
     tmp[:,np.arange(width)*2 + 1] = v
     tmp.astype(np.float32).tofile(f)
     f.close()
+
+def writeFlowJPEG(filename, flow):
+
+    import cv2
+    import cortex.vision.flow
+
+    # Flow has shape [h,w,2]
+    # Convert to range [0,1] and save min/max values for denormalization
+    flow_u_norm, min_u, max_u = cortex.vision.flow.normalize_flow(flow[:,:,0])
+    flow_v_norm, min_v, max_v = cortex.vision.flow.normalize_flow(flow[:,:,1])
+
+    #print("[Flow-X] Min  = {:.3f}, Max = {:.3f}".format(min_u, max_u))
+    #print("[Flow-Y] Min  = {:.3f}, Max = {:.3f}".format(min_v, max_v))
+
+    # Write JPG image to disk
+    flow_as_jpg = np.dstack((flow_u_norm, flow_v_norm, np.zeros_like(flow_u_norm)))
+    flow_as_jpg = (flow_as_jpg*255.0).astype(np.uint8)
+    cv2.imwrite(filename, flow_as_jpg)
+
+    return min_u, max_u, min_v, max_v
+
+
+##########################################################################################
+
+def read_flo_file(file):
+    # For EpicFlow
+    assert type(file) is str, "file is not str %r" % str(file)
+    assert os.path.isfile(file) is True, "file does not exist %r" % str(file)
+    assert file[-4:] == '.flo', "file ending is not .flo %r" % file[-4:]
+    f = open(file,'rb')
+    flo_number = np.fromfile(f, np.float32, count=1)[0]
+    assert flo_number == TAG_FLOAT, 'Flow number %r incorrect. Invalid .flo file' % flo_number
+    w = np.fromfile(f, np.int32, count=1)
+    h = np.fromfile(f, np.int32, count=1)
+    #if error try: data = np.fromfile(f, np.float32, count=2*w[0]*h[0])
+    data = np.fromfile(f, np.float32, count=int(2*w*h))
+    # Reshape data into 3D array (columns, rows, bands)
+    flow = np.resize(data, (int(h), int(w), 2))
+    f.close()
+    return flow
+
+if __name__ == "__main__":
+
+    import glob
+    import os
+    import cv2
+    import cortex.utils
+    import cortex.vision.flow
+
+    dir_with_flo_files = '/home/tomrunia/dev/lib/flownet2-pytorch/work/inference/run.epoch-0-flow-field'
+    output_dir = '/home/tomrunia/data/RepMeasureDataset/flow/'
+
+    files = glob.glob(os.path.join(dir_with_flo_files, '*.flo'))
+    files.sort()
+
+    for i, file in enumerate(files):
+        flow_uv = readFlow(file)
+        print(i, 'flow_uv', flow_uv.min(), flow_uv.max())
+        flow_color = cortex.vision.flow.flow_to_color(flow_uv)
+        cv2.imshow('flow', flow_color)
+        cv2.waitKey(0)
+
+        #output_filename = os.path.join(output_dir, cortex.utils.basename(file) + '.jpg')
+        #cv2.imwrite(output_filename, flow_color)
+
+
+
+
