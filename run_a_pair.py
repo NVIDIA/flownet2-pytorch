@@ -1,6 +1,3 @@
-# a damo for testing the project
-# usage: check all the path that used in this demo, and modify them to fit yours.
-
 import torch
 import numpy as np
 import argparse
