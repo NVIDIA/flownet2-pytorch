@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ######################################################################################
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=32, help="Batch size")
+    parser.add_argument('--batch_size', type=int, default=16, help="Batch size")
     parser.add_argument("--rgb_max", type=float, default = 255.)
     parser.add_argument('--no_cuda', action='store_true')
     parser.add_argument('--fp16', action='store_true', help='Run model in pseudo-fp16 mode (fp16 storage fp32 math).')
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         if os.path.exists(args.image_dir_in):
             inference_size = [-1, -1]  # largest possible
             dataset = ImagesFromFolderInference(image_subdir, inference_size, extension=args.image_extension)
-            data_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, pin_memory=True)
+            data_loader = DataLoader(dataset, batch_size=args.batch_size, num_workers=2, shuffle=False, pin_memory=True)
             logging.info('Succesfully initialized data set with {} images.'.format(len(dataset)))
         else:
             raise NotADirectoryError('Input image folder does not exist: {}'.format(args.image_dir_in))
