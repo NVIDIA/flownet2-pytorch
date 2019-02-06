@@ -326,6 +326,8 @@ class ImagesFromFolder(data.Dataset):
     self.replicates = replicates
 
     images = sorted( glob( join(root, '*.' + iext) ) )
+    assert images, 'no images found in directory: {}'.format(root)
+
     self.image_list = []
     for i in range(len(images)-1):
         im1 = images[i]
@@ -333,6 +335,7 @@ class ImagesFromFolder(data.Dataset):
         self.image_list += [ [ im1, im2 ] ]
 
     self.size = len(self.image_list)
+    print(self.image_list)
 
     self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
@@ -373,6 +376,8 @@ class ImagesFromFolderInference(data.Dataset):
 
     # List all the images
     images = sorted( glob( join(image_folder, '*.' + extension) ) )
+    assert len(images) > 0, 'no images found in directory: {}'.format(root)
+
     self.image_list = []
     for i in range(len(images)-1):
         im1 = images[i]
