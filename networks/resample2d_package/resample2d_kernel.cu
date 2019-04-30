@@ -1,5 +1,6 @@
 #include <ATen/ATen.h>
 #include <ATen/Context.h>
+#include <ATen/cuda/CUDAContext.h>
 
 #define CUDA_NUM_THREADS 512 
 #define THREADS_PER_BLOCK 64 
@@ -208,7 +209,8 @@ void resample2d_kernel_forward(
     // TODO: when atomicAdd gets resolved, change to AT_DISPATCH_FLOATING_TYPES_AND_HALF
 //    AT_DISPATCH_FLOATING_TYPES(input1.type(), "resample_forward_kernel", ([&] {
 
-        kernel_resample2d_update_output<float><<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, at::globalContext().getCurrentCUDAStream() >>>(
+        kernel_resample2d_update_output<float><<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, at::cuda::getCurrentCUDAStream() >>>(
+//at::globalContext().getCurrentCUDAStream() >>>(
             n,
             input1.data<float>(),
             input1_size,
@@ -253,7 +255,8 @@ void resample2d_kernel_backward(
 
 //    AT_DISPATCH_FLOATING_TYPES(input1.type(), "resample_backward_input1", ([&] {
 
-        kernel_resample2d_backward_input1<float><<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, at::globalContext().getCurrentCUDAStream() >>>(
+        kernel_resample2d_backward_input1<float><<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, at::cuda::getCurrentCUDAStream() >>>(
+//at::globalContext().getCurrentCUDAStream() >>>(
             n, 
             input1.data<float>(), 
             input1_size,
@@ -280,7 +283,8 @@ void resample2d_kernel_backward(
 //    AT_DISPATCH_FLOATING_TYPES(gradInput2.type(), "resample_backward_input2", ([&] {
 
 
-        kernel_resample2d_backward_input2<float><<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, at::globalContext().getCurrentCUDAStream() >>>(
+        kernel_resample2d_backward_input2<float><<< (n + CUDA_NUM_THREADS - 1)/CUDA_NUM_THREADS, CUDA_NUM_THREADS, 0, at::cuda::getCurrentCUDAStream() >>>(
+//at::globalContext().getCurrentCUDAStream() >>>(
             n, 
             input1.data<float>(), 
             input1_size, 
