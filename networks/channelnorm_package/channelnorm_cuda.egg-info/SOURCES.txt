@@ -1,7 +1,0 @@
-channelnorm_cuda.cc
-channelnorm_kernel.cu
-setup.py
-channelnorm_cuda.egg-info/PKG-INFO
-channelnorm_cuda.egg-info/SOURCES.txt
-channelnorm_cuda.egg-info/dependency_links.txt
-channelnorm_cuda.egg-info/top_level.txt

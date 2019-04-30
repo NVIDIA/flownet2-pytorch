@@ -1,7 +1,0 @@
-resample2d_cuda.cc
-resample2d_kernel.cu
-setup.py
-resample2d_cuda.egg-info/PKG-INFO
-resample2d_cuda.egg-info/SOURCES.txt
-resample2d_cuda.egg-info/dependency_links.txt
-resample2d_cuda.egg-info/top_level.txt
