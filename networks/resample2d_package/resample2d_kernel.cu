@@ -16,7 +16,7 @@ template <typename scalar_t>
 __global__ void kernel_resample2d_update_output(const int n, 
                                                const scalar_t* __restrict__ input1, const long4 input1_size, const long4 input1_stride,
                                                const scalar_t* __restrict__ input2, const long4 input2_size, const long4 input2_stride, 
-                                               scalar_t* __restrict__ output, const long4 output_size, const long4 output_stride, int kernel_size) {
+                                               scalar_t* __restrict__ output, const long4 output_size, const long4 output_stride, int kernel_size, int bilinear) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (index >= n) {
@@ -45,21 +45,29 @@ __global__ void kernel_resample2d_update_output(const int n,
     scalar_t alpha = xf - floor(xf); // alpha
     scalar_t beta = yf - floor(yf); // beta
 
-    int xL = max(min( int (floor(xf)),    dim_w-1), 0);
-    int xR = max(min( int (floor(xf)+1), dim_w -1), 0);
-    int yT = max(min( int (floor(yf)),    dim_h-1), 0);
-    int yB = max(min( int (floor(yf)+1),  dim_h-1), 0);
+    if (bilinear) {
+        int xL = max(min( int (floor(xf)),    dim_w-1), 0);
+        int xR = max(min( int (floor(xf)+1), dim_w -1), 0);
+        int yT = max(min( int (floor(yf)),    dim_h-1), 0);
+        int yB = max(min( int (floor(yf)+1),  dim_h-1), 0);
 
-    for (int fy = 0; fy < kernel_size; fy += 1) {
-        for (int fx = 0; fx < kernel_size; fx += 1) {
-            val += static_cast<float>((1. - alpha)*(1. - beta) * DIM3_INDEX(input1, b, c, yT + fy, xL + fx));
-            val += static_cast<float>((alpha)*(1. - beta) * DIM3_INDEX(input1, b, c, yT + fy, xR + fx));
-            val += static_cast<float>((1. - alpha)*(beta) * DIM3_INDEX(input1, b, c, yB + fy, xL + fx));
-            val += static_cast<float>((alpha)*(beta) * DIM3_INDEX(input1, b, c, yB + fy, xR + fx));
+        for (int fy = 0; fy < kernel_size; fy += 1) {
+            for (int fx = 0; fx < kernel_size; fx += 1) {
+                val += static_cast<float>((1. - alpha)*(1. - beta) * DIM3_INDEX(input1, b, c, yT + fy, xL + fx));
+                val += static_cast<float>((alpha)*(1. - beta) * DIM3_INDEX(input1, b, c, yT + fy, xR + fx));
+                val += static_cast<float>((1. - alpha)*(beta) * DIM3_INDEX(input1, b, c, yB + fy, xL + fx));
+                val += static_cast<float>((alpha)*(beta) * DIM3_INDEX(input1, b, c, yB + fy, xR + fx));
+            }
         }
-    }
 
-    output[index] = val;
+        output[index] = val;
+    }
+    else {
+        int xN = max(min( int (floor(xf + 0.5)), dim_w - 1), 0);
+        int yN = max(min( int (floor(yf + 0.5)), dim_h - 1), 0);
+
+        output[index] = static_cast<float> ( DIM3_INDEX(input1, b, c, yN, xN) );
+    }
 
 }
 
@@ -193,7 +201,8 @@ void resample2d_kernel_forward(
     at::Tensor& input1, 
     at::Tensor& input2,
     at::Tensor& output, 
-    int kernel_size) {
+    int kernel_size,
+    bool bilinear) {
 
     int n = output.numel();
 
@@ -221,7 +230,8 @@ void resample2d_kernel_forward(
             output.data<float>(),
             output_size,
             output_stride,
-            kernel_size);
+            kernel_size,
+            bilinear);
 
 //    }));
 
