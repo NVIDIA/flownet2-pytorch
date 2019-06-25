@@ -16,6 +16,7 @@ RUN pip install setproctitle pytz ipython==7.5.0
 RUN pip install requests
 
 # Install correlation model dependencies
+ADD networks networks/
 ADD install.sh /
 RUN /install.sh
 
