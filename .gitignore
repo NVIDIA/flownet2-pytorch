@@ -5,4 +5,8 @@ _ext
 work
 work/*
 _ext/
-*.tar
+datasets/*
+!datasets/.gitkeep
+checkpoints/*
+!checkpoints/.gitkeep
+*.DS_Store
