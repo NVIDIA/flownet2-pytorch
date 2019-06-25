@@ -16,8 +16,8 @@ RUN pip install setproctitle pytz ipython==7.5.0
 RUN pip install requests
 
 # Install correlation model dependencies
-WORKDIR /flownet2-pytorch
-RUN bash install.sh
+ADD install.sh /
+RUN /install.sh
 
 # Dependencies to process flow files
 RUN apt-get install ffmpeg
