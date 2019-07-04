@@ -21,7 +21,7 @@ python main.py --inference --model FlowNet2 --save_flow \
 
 echo_status 'Converting sintel data optical flow files to color coded image files'
 
-python /flownet2image/f2i.py \
+python /flow2image/f2i.py \
 datasets/sintel/output/inference/run.epoch-o-flow-field/*.flo \
 -o datasets/sintel/output/color_coding
 
@@ -45,6 +45,6 @@ python main.py --inference --model FlowNet2 --save_flow \
 
 echo_status 'Generating the color coding images ffor optical flow files for video'
 
-python /flownet2image/f2i.py /
+python /flow2image/f2i.py /
 datasets/dancelogue/output/inference/run.epoch-o-flow-field/*.flo /
 -o datasets/dancelogue/output/color_coding -v -r 30
