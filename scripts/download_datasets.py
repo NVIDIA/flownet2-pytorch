@@ -19,18 +19,35 @@ def download_sintel():
         root.mkdir()
 
     file_name = str(root / 'MPI-Sintel-complete.zip')
-    unzip_file_name = str(root)
-    download(url, file_name, unzip_file_name)
+    download(url, file_name, unzip_path=str(root), msg='SINTEL')
 
 
-def download(url, file_name, unzip_file_name):
+def download_dancelogue():
+    item_urls = [
+        ('sample.flo', 'https://dancelogue.s3.amazonaws.com/open_source/datasets/generating-optical-flow-using-flownet-for-human-action-deep-learning-algorithms/000835.flo'),
+        ('sample-flo-color-code.png', 'https://dancelogue.s3.amazonaws.com/open_source/datasets/generating-optical-flow-using-flownet-for-human-action-deep-learning-algorithms/000835.flo.png'),
+        ('sample-optical-flow-video.mp4', 'https://dancelogue.s3.amazonaws.com/open_source/datasets/generating-optical-flow-using-flownet-for-human-action-deep-learning-algorithms/sample-optical-flow-video.mp4'),
+        ('sample-video.mp4', 'https://dancelogue.s3.amazonaws.com/open_source/datasets/generating-optical-flow-using-flownet-for-human-action-deep-learning-algorithms/sample-video.mp4')
+    ]
+
+    root = Path.cwd() / 'datasets' / 'dancelogue'
+
+    if not root.exists():
+        root.mkdir()
+
+    for item in item_urls:
+        file_name = str(root / item[0])
+        download(item[1], file_name, unzip_path=False, msg='DANCELOGUE %s ' % item[0])
+
+
+def download(url, file_name, unzip_path=None, msg=None):
     # https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests
     resp = requests.get(url, stream=True)
     total_size = int(resp.headers.get('content-length', 0))
     block_size = 1024
     wrote = 0
 
-    print('############### DOWNLOADING SINTEL DATA ###############')
+    print('############### DOWNLOADING %s DATA ###############' % msg)
 
     with open(file_name, 'wb') as f:
         for data in tqdm(resp.iter_content(block_size), total=math.ceil(total_size // block_size), unit='KB', unit_scale=True):
@@ -40,11 +57,12 @@ def download(url, file_name, unzip_file_name):
         if total_size != 0 and wrote != total_size:
             print("ERROR, something went wrong")
 
-    print('############### UNZIPPING SINTEL DATA ###############')
+    if unzip_path:
+        print('############### UNZIPPING %s DATA ###############' % msg)
 
-    unzip_file(file_name, unzip_file_name)
+        unzip_file(file_name, unzip_path)
 
-    print('############### COMPLETE SINTEL DATA ###############')
+        print('############### COMPLETE UNZIPPING DATA ###############')
 
 
 def save_response_content(response, destination):
@@ -63,4 +81,5 @@ def unzip_file(file_name, unzip_path):
 
 
 if __name__ == '__main__':
+    download_dancelogue()
     download_sintel()
