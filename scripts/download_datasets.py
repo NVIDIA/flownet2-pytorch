@@ -39,6 +39,11 @@ def download_dancelogue():
         file_name = str(root / item[0])
         download(item[1], file_name, unzip_path=False, msg='DANCELOGUE %s ' % item[0])
 
+    frames_path = root / 'frames'
+
+    if not frames_path.exists():
+        frames_path.mkdir()
+
 
 def download(url, file_name, unzip_path=None, msg=None):
     # https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests
