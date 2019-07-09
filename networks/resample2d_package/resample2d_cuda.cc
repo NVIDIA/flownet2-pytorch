@@ -7,8 +7,8 @@ int resample2d_cuda_forward(
     at::Tensor& input1,
     at::Tensor& input2, 
     at::Tensor& output,
-    int kernel_size) {
-      resample2d_kernel_forward(input1, input2, output, kernel_size);
+    int kernel_size, bool bilinear) {
+      resample2d_kernel_forward(input1, input2, output, kernel_size, bilinear);
     return 1;
 }
 

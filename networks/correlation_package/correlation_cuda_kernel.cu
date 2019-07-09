@@ -4,6 +4,7 @@
 
 #define CUDA_NUM_THREADS 1024
 #define THREADS_PER_BLOCK 32
+#define FULL_MASK 0xffffffff
 
 #include <ATen/ATen.h>
 #include <ATen/NativeFunctions.h>
@@ -11,6 +12,36 @@
 #include <ATen/cuda/CUDAApplyUtils.cuh>
 
 using at::Half;
+
+template<typename scalar_t>
+__forceinline__ __device__ scalar_t warpReduceSum(scalar_t val) {
+        for (int offset = 16; offset > 0; offset /= 2)
+                val += __shfl_down_sync(FULL_MASK, val, offset);
+        return val;
+}
+
+template<typename scalar_t>
+__forceinline__ __device__ scalar_t blockReduceSum(scalar_t val) {
+
+        static __shared__ scalar_t shared[32];
+        int lane = threadIdx.x % warpSize;
+        int wid = threadIdx.x / warpSize;
+
+        val = warpReduceSum(val);
+
+        if (lane == 0)
+                shared[wid] = val;
+
+        __syncthreads();
+
+        val = (threadIdx.x < blockDim.x / warpSize) ? shared[lane] : 0;
+
+        if (wid == 0)
+                val = warpReduceSum(val);
+
+        return val;
+}
+
 
 template <typename scalar_t>
 __global__ void channels_first(const scalar_t* __restrict__ input, scalar_t* rinput, int channels, int height, int width, int pad_size)
@@ -38,80 +69,83 @@ __global__ void channels_first(const scalar_t* __restrict__ input, scalar_t* rin
     }
 }
 
-template <typename scalar_t>
-__global__ void correlation_forward( scalar_t*  output, int nOutputChannels, int outputHeight, int outputWidth, 
-                                     const scalar_t* __restrict__ rInput1, int nInputChannels, int inputHeight, int inputWidth, 
-                                     const scalar_t* __restrict__ rInput2,
-                                     int pad_size,
-                                     int kernel_size,
-                                     int max_displacement,
-                                     int stride1,
-                                     int stride2)
-{
-    // n (batch size), c (num of channels), y (height), x (width)
-    
-    int pInputWidth = inputWidth + 2 * pad_size;
-    int pInputHeight = inputHeight + 2 * pad_size;
 
-    int kernel_rad = (kernel_size - 1) / 2;
-    int displacement_rad = max_displacement / stride2;
-    int displacement_size = 2 * displacement_rad + 1;
+template<typename scalar_t>
+__global__ void correlation_forward(scalar_t* __restrict__ output, const int nOutputChannels,
+                const int outputHeight, const int outputWidth, const scalar_t* __restrict__ rInput1,
+                const int nInputChannels, const int inputHeight, const int inputWidth,
+                const scalar_t* __restrict__ rInput2, const int pad_size, const int kernel_size,
+                const int max_displacement, const int stride1, const int stride2) {
 
-    int n  = blockIdx.x;
-    int y1 = blockIdx.y * stride1 + max_displacement;
-    int x1 = blockIdx.z * stride1 + max_displacement;
-    int c = threadIdx.x;
+        int32_t pInputWidth = inputWidth + 2 * pad_size;
+        int32_t pInputHeight = inputHeight + 2 * pad_size;
 
-    int pdimyxc = pInputHeight * pInputWidth * nInputChannels;
-    int pdimxc = pInputWidth * nInputChannels;
-    int pdimc = nInputChannels;
+        int32_t kernel_rad = (kernel_size - 1) / 2;
 
-    int tdimcyx = nOutputChannels * outputHeight * outputWidth;
-    int tdimyx = outputHeight * outputWidth;
-    int tdimx = outputWidth;
+        int32_t displacement_rad = max_displacement / stride2;
 
-    scalar_t nelems = kernel_size * kernel_size * pdimc;
+        int32_t displacement_size = 2 * displacement_rad + 1;
 
-    __shared__ scalar_t prod_sum[THREADS_PER_BLOCK];
+        int32_t n = blockIdx.x;
+        int32_t y1 = blockIdx.y * stride1 + max_displacement;
+        int32_t x1 = blockIdx.z * stride1 + max_displacement;
+        int32_t c = threadIdx.x;
 
-    // no significant speed-up in using chip memory for input1 sub-data, 
-    // not enough chip memory size to accomodate memory per block for input2 sub-data
-    // instead i've used device memory for both 
+        int32_t pdimyxc = pInputHeight * pInputWidth * nInputChannels;
 
-    // element-wise product along channel axis
-    for (int tj = -displacement_rad; tj <= displacement_rad; ++tj ) {
-      for (int ti = -displacement_rad; ti <= displacement_rad; ++ti ) {
-        prod_sum[c] = 0;
-        int x2 = x1 + ti*stride2;
-        int y2 = y1 + tj*stride2;
+        int32_t pdimxc = pInputWidth * nInputChannels;
 
-        for (int j = -kernel_rad; j <= kernel_rad; ++j) {
-          for (int i = -kernel_rad; i <= kernel_rad; ++i) {
-            for (int ch = c; ch < pdimc; ch += THREADS_PER_BLOCK) {
-              int indx1 = n * pdimyxc + (y1+j) * pdimxc + (x1 + i) * pdimc + ch;
-              int indx2 = n * pdimyxc + (y2+j) * pdimxc + (x2 + i) * pdimc + ch;
+        int32_t pdimc = nInputChannels;
 
-              prod_sum[c] += rInput1[indx1] * rInput2[indx2];
+        int32_t tdimcyx = nOutputChannels * outputHeight * outputWidth;
+        int32_t tdimyx = outputHeight * outputWidth;
+        int32_t tdimx = outputWidth;
+
+        int32_t nelems = kernel_size * kernel_size * pdimc;
+
+        // element-wise product along channel axis
+        for (int tj = -displacement_rad; tj <= displacement_rad; ++tj) {
+                for (int ti = -displacement_rad; ti <= displacement_rad; ++ti) {
+                        int x2 = x1 + ti * stride2;
+                        int y2 = y1 + tj * stride2;
+
+                        float acc0 = 0.0f;
+
+                        for (int j = -kernel_rad; j <= kernel_rad; ++j) {
+                                for (int i = -kernel_rad; i <= kernel_rad; ++i) {
+                                        // THREADS_PER_BLOCK
+                                        #pragma unroll
+                                        for (int ch = c; ch < pdimc; ch += blockDim.x) {
+
+                                                int indx1 = n * pdimyxc + (y1 + j) * pdimxc
+                                                                + (x1 + i) * pdimc + ch;
+                                                int indx2 = n * pdimyxc + (y2 + j) * pdimxc
+                                                                + (x2 + i) * pdimc + ch;
+                                                acc0 += static_cast<float>(rInput1[indx1] * rInput2[indx2]);
+                                        }
+                                }
+                        }
+
+                        if (blockDim.x == warpSize) {
+                            __syncwarp();
+                            acc0 = warpReduceSum(acc0);
+                        } else {
+                            __syncthreads();
+                            acc0 = blockReduceSum(acc0);
+                        }
+
+                        if (threadIdx.x == 0) {
+
+                                int tc = (tj + displacement_rad) * displacement_size
+                                                + (ti + displacement_rad);
+                                const int tindx = n * tdimcyx + tc * tdimyx + blockIdx.y * tdimx
+                                                + blockIdx.z;
+                                output[tindx] = static_cast<scalar_t>(acc0 / nelems);
+                        }
             }
-          }
         }
-
-        // accumulate 
-        __syncthreads();
-        if (c == 0) {
-          scalar_t reduce_sum = 0;
-          for (int index = 0; index < THREADS_PER_BLOCK; ++index) {
-            reduce_sum += prod_sum[index];
-          }
-          int tc = (tj + displacement_rad) * displacement_size + (ti + displacement_rad);
-          const int tindx = n * tdimcyx + tc * tdimyx + blockIdx.y * tdimx + blockIdx.z;
-          output[tindx] = reduce_sum / nelems;
-        }
-
-      }
-    }
-
 }
+
 
 template <typename scalar_t>
 __global__ void correlation_backward_input1(int item, scalar_t* gradInput1, int nInputChannels, int inputHeight, int inputWidth, 

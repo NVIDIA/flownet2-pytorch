@@ -12,7 +12,7 @@ For more help, type <br />
 
 ## Network architectures
 Below are the different flownet neural network architectures that are provided. <br />
-A batchnorm version for each network is available.
+A batchnorm version for each network is also available.
 
  - **FlowNet2S**
  - **FlowNet2C**
