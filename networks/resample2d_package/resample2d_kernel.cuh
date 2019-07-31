@@ -15,4 +15,5 @@ void resample2d_kernel_backward(
     at::Tensor& gradOutput,
     at::Tensor& gradInput1, 
     at::Tensor& gradInput2, 
-    int kernel_size);
+    int kernel_size,
+    bool bilinear);

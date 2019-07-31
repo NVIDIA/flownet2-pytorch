@@ -16,7 +16,7 @@ template <typename scalar_t>
 __global__ void kernel_resample2d_update_output(const int n, 
                                                const scalar_t* __restrict__ input1, const long4 input1_size, const long4 input1_stride,
                                                const scalar_t* __restrict__ input2, const long4 input2_size, const long4 input2_stride, 
-                                               scalar_t* __restrict__ output, const long4 output_size, const long4 output_stride, int kernel_size, int bilinear) {
+                                               scalar_t* __restrict__ output, const long4 output_size, const long4 output_stride, int kernel_size, bool bilinear) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (index >= n) {
@@ -77,7 +77,7 @@ __global__ void kernel_resample2d_backward_input1(
     const int n, const scalar_t* __restrict__ input1, const long4 input1_size, const long4 input1_stride,
     const scalar_t* __restrict__ input2, const long4 input2_size, const long4 input2_stride,
     const scalar_t* __restrict__ gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride,
-    scalar_t* __restrict__ gradInput, const long4 gradInput_size, const long4 gradInput_stride, int kernel_size) {
+    scalar_t* __restrict__ gradInput, const long4 gradInput_size, const long4 gradInput_stride, int kernel_size, bool bilinear) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -129,7 +129,7 @@ __global__ void kernel_resample2d_backward_input2(
     const int n, const scalar_t* __restrict__ input1, const long4 input1_size, const long4 input1_stride,
     const scalar_t* __restrict__ input2, const long4 input2_size, const long4 input2_stride,
     const scalar_t* __restrict__ gradOutput, const long4 gradOutput_size, const long4 gradOutput_stride,
-    scalar_t* __restrict__ gradInput, const long4 gradInput_size, const long4 gradInput_stride, int kernel_size) {
+    scalar_t* __restrict__ gradInput, const long4 gradInput_size, const long4 gradInput_stride, int kernel_size, bool bilinear) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -247,7 +247,8 @@ void resample2d_kernel_backward(
     at::Tensor& gradOutput,
     at::Tensor& gradInput1,
     at::Tensor& gradInput2,
-    int kernel_size) {
+    int kernel_size,
+    bool bilinear) {
 
     int n = gradOutput.numel();
 
@@ -280,7 +281,8 @@ void resample2d_kernel_backward(
             gradInput1.data<float>(),
             gradInput1_size,
             gradInput1_stride, 
-            kernel_size
+            kernel_size,
+            bilinear
         );
 
 //    }));
@@ -308,7 +310,8 @@ void resample2d_kernel_backward(
             gradInput2.data<float>(),
             gradInput2_size,
             gradInput2_stride,
-            kernel_size
+            kernel_size,
+            bilinear
        );
 
 //    }));
