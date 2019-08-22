@@ -43,7 +43,7 @@ python main.py --inference --model FlowNet2 --save_flow \
 
 # Generating the color coding images ffor optical flow files for video
 
-echo_status 'Generating the color coding images ffor optical flow files for video'
+echo_status 'Generating the color coding images for optical flow files for video'
 
 python /flow2image/f2i.py \
 datasets/dancelogue/output/inference/run.epoch-0-flow-field/*.flo \
