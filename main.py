@@ -366,7 +366,7 @@ if __name__ == '__main__':
             with torch.no_grad():
                 losses, output = model(data[0], target[0], inference=True)
 
-            losses = [torch.mean(loss_value) for loss_value in losses] 
+            losses = [torch.mean(loss_value) for loss_value in losses]
             loss_val = losses[0] # Collect first loss for weight update
             total_loss += loss_val.item()
             loss_values = [v.item() for v in losses]

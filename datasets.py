@@ -326,6 +326,8 @@ class ImagesFromFolder(data.Dataset):
     self.replicates = replicates
 
     images = sorted( glob( join(root, '*.' + iext) ) )
+    assert images, 'no images found in directory: {}'.format(root)
+
     self.image_list = []
     for i in range(len(images)-1):
         im1 = images[i]
@@ -333,6 +335,7 @@ class ImagesFromFolder(data.Dataset):
         self.image_list += [ [ im1, im2 ] ]
 
     self.size = len(self.image_list)
+    print(self.image_list)
 
     self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
@@ -363,6 +366,48 @@ class ImagesFromFolder(data.Dataset):
 
   def __len__(self):
     return self.size * self.replicates
+
+
+class ImagesFromFolderInference(data.Dataset):
+  def __init__(self, image_folder, inference_size, extension='jpg'):
+
+    self.image_folder = image_folder
+    self.inference_size = inference_size
+
+    # List all the images
+    images = sorted( glob( join(image_folder, '*.' + extension) ) )
+    assert len(images) > 0, 'no images found in directory: {}'.format(root)
+
+    self.image_list = []
+    for i in range(len(images)-1):
+        im1 = images[i]
+        im2 = images[i+1]
+        self.image_list += [ [ im1, im2 ] ]
+
+    self.size = len(self.image_list)
+
+    # Get frame size from first image
+    self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
+    if (self.inference_size[0] < 0) or (self.inference_size[1] < 0) or (self.frame_size[0]%64) or (self.frame_size[1]%64):
+        self.inference_size[0] = ( (self.frame_size[0])//64 ) * 64
+        self.inference_size[1] = ( (self.frame_size[1])//64 ) * 64
+
+
+  def __getitem__(self, index):
+    index = index % self.size
+    img1 = frame_utils.read_gen(self.image_list[index][0])
+    img2 = frame_utils.read_gen(self.image_list[index][1])
+    images = [img1, img2]
+    image_size = img1.shape[:2]
+
+    cropper = StaticCenterCrop(image_size, self.inference_size)
+    images = list(map(cropper, images))
+    images = np.array(images).transpose(3,0,1,2)
+    images = torch.from_numpy(images.astype(np.float32))
+    return [images], [torch.zeros(images.size()[0:1] + (2,) + images.size()[-2:])]
+
+  def __len__(self):
+    return self.size
 
 '''
 import argparse

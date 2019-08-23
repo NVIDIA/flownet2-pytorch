@@ -9,20 +9,20 @@ import torch.nn as nn
 import math
 
 def EPE(input_flow, target_flow):
-    return torch.norm(target_flow-input_flow,p=2,dim=1).mean()
+    return torch.norm(target_flow-input_flow[:,None],p=2,dim=1).mean()
 
 class L1(nn.Module):
     def __init__(self):
         super(L1, self).__init__()
     def forward(self, output, target):
-        lossvalue = torch.abs(output - target).mean()
+        lossvalue = torch.abs(output[:,None] - target).mean()
         return lossvalue
 
 class L2(nn.Module):
     def __init__(self):
         super(L2, self).__init__()
     def forward(self, output, target):
-        lossvalue = torch.norm(output-target,p=2,dim=1).mean()
+        lossvalue = torch.norm(output[:,None]-target,p=2,dim=1).mean()
         return lossvalue
 
 class L1Loss(nn.Module):
