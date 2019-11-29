@@ -45,6 +45,8 @@ if __name__ == '__main__':
     parser.add_argument('--render_validation', action='store_true', help='run inference (save flows to file) and every validation_frequency epoch')
 
     parser.add_argument('--inference', action='store_true')
+    parser.add_argument('--inference_visualize', action='store_true',
+                        help="visualize the optical flow during inference")
     parser.add_argument('--inference_size', type=int, nargs='+', default = [-1,-1], help='spatial size divisible by 64. default (-1,-1) - largest possible valid size would be used')
     parser.add_argument('--inference_batch_size', type=int, default=1)
     parser.add_argument('--inference_n_batches', type=int, default=-1)
@@ -346,7 +348,12 @@ if __name__ == '__main__':
             flow_folder = "{}/inference/{}.epoch-{}-flow-field".format(args.save,args.name.replace('/', '.'),epoch)
             if not os.path.exists(flow_folder):
                 os.makedirs(flow_folder)
-
+        
+        # visualization folder
+        if args.inference_visualize:
+            flow_vis_folder = "{}/inference/{}.epoch-{}-flow-vis".format(args.save, args.name.replace('/', '.'), epoch)
+            if not os.path.exists(flow_vis_folder):
+                os.makedirs(flow_vis_folder)
         
         args.inference_n_batches = np.inf if args.inference_n_batches < 0 else args.inference_n_batches
 
@@ -380,7 +387,13 @@ if __name__ == '__main__':
                 for i in range(args.inference_batch_size):
                     _pflow = output[i].data.cpu().numpy().transpose(1, 2, 0)
                     flow_utils.writeFlow( join(flow_folder, '%06d.flo'%(batch_idx * args.inference_batch_size + i)),  _pflow)
-
+                    
+                    # You can comment out the plt block in visulize_flow_file() for real-time visualization
+                    if args.inference_visualize:
+                        flow_utils.visulize_flow_file(
+                            join(flow_folder, '%06d.flo' % (batch_idx * args.inference_batch_size + i)),flow_vis_folder)
+                   
+                            
             progress.set_description('Inference Averages for Epoch {}: '.format(epoch) + tools.format_dictionary_of_losses(loss_labels, np.array(statistics).mean(axis=0)))
             progress.update(1)
 
