@@ -23,3 +23,11 @@ RUN /install.sh
 # Dependencies to process flow files
 RUN apt-get install -y ffmpeg
 RUN git clone https://github.com/georgegach/flow2image.git /flow2image
+
+#
+COPY [".", "/flownet2-pytorch"]
+RUN mkdir /datasets
+COPY ["entrypoint.sh", "/"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD []
+
