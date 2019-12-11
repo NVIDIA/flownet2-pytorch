@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from tensorboardX import SummaryWriter
 
-import argparse, os, sys, subprocess
+import argparse, os, shutil, sys, subprocess
 import setproctitle, colorama
 import numpy as np
 from tqdm import tqdm
@@ -64,17 +64,17 @@ if __name__ == '__main__':
     tools.add_arguments_for_module(parser, losses, argument_for_class='loss', default='L1Loss')
 
     tools.add_arguments_for_module(parser, torch.optim, argument_for_class='optimizer', default='Adam', skip_params=['params'])
-    
-    tools.add_arguments_for_module(parser, datasets, argument_for_class='training_dataset', default='MpiSintelFinal', 
+
+    tools.add_arguments_for_module(parser, datasets, argument_for_class='training_dataset', default='MpiSintelFinal',
                                     skip_params=['is_cropped'],
                                     parameter_defaults={'root': './MPI-Sintel/flow/training'})
-    
-    tools.add_arguments_for_module(parser, datasets, argument_for_class='validation_dataset', default='MpiSintelClean', 
+
+    tools.add_arguments_for_module(parser, datasets, argument_for_class='validation_dataset', default='MpiSintelClean',
                                     skip_params=['is_cropped'],
                                     parameter_defaults={'root': './MPI-Sintel/flow/training',
                                                         'replicates': 1})
-    
-    tools.add_arguments_for_module(parser, datasets, argument_for_class='inference_dataset', default='MpiSintelClean', 
+
+    tools.add_arguments_for_module(parser, datasets, argument_for_class='inference_dataset', default='MpiSintelClean',
                                     skip_params=['is_cropped'],
                                     parameter_defaults={'root': './MPI-Sintel/flow/training',
                                                         'replicates': 1})
@@ -129,8 +129,8 @@ if __name__ == '__main__':
         args.effective_batch_size = args.batch_size * args.number_gpus
         args.effective_inference_batch_size = args.inference_batch_size * args.number_gpus
         args.effective_number_workers = args.number_workers * args.number_gpus
-        gpuargs = {'num_workers': args.effective_number_workers, 
-                   'pin_memory': True, 
+        gpuargs = {'num_workers': args.effective_number_workers,
+                   'pin_memory': True,
                    'drop_last' : True} if args.cuda else {}
         inf_gpuargs = gpuargs.copy()
         inf_gpuargs['num_workers'] = args.number_workers
@@ -165,7 +165,7 @@ if __name__ == '__main__':
                 self.model = args.model_class(args, **kwargs)
                 kwargs = tools.kwargs_from_args(args, 'loss')
                 self.loss = args.loss_class(args, **kwargs)
-                
+
             def forward(self, data, target, inference=False ):
                 output = self.model(data)
 
@@ -181,14 +181,14 @@ if __name__ == '__main__':
         block.log('Effective Batch Size: {}'.format(args.effective_batch_size))
         block.log('Number of parameters: {}'.format(sum([p.data.nelement() if p.requires_grad else 0 for p in model_and_loss.parameters()])))
 
-        # assing to cuda or wrap with dataparallel, model and loss 
+        # assing to cuda or wrap with dataparallel, model and loss
         if args.cuda and (args.number_gpus > 0) and args.fp16:
             block.log('Parallelizing')
             model_and_loss = nn.parallel.DataParallel(model_and_loss, device_ids=list(range(args.number_gpus)))
 
             block.log('Initializing CUDA')
             model_and_loss = model_and_loss.cuda().half()
-            torch.cuda.manual_seed(args.seed) 
+            torch.cuda.manual_seed(args.seed)
             param_copy = [param.clone().type(torch.cuda.FloatTensor).detach() for param in model_and_loss.parameters()]
 
         elif args.cuda and args.number_gpus > 0:
@@ -196,7 +196,7 @@ if __name__ == '__main__':
             model_and_loss = model_and_loss.cuda()
             block.log('Parallelizing')
             model_and_loss = nn.parallel.DataParallel(model_and_loss, device_ids=list(range(args.number_gpus)))
-            torch.cuda.manual_seed(args.seed) 
+            torch.cuda.manual_seed(args.seed)
 
         else:
             block.log('CUDA not being used')
@@ -226,7 +226,7 @@ if __name__ == '__main__':
         train_logger = SummaryWriter(log_dir = os.path.join(args.save, 'train'), comment = 'training')
         validation_logger = SummaryWriter(log_dir = os.path.join(args.save, 'validation'), comment = 'validation')
 
-    # Dynamically load the optimizer with parameters passed in via "--optimizer_[param]=[value]" arguments 
+    # Dynamically load the optimizer with parameters passed in via "--optimizer_[param]=[value]" arguments
     with tools.TimerBlock("Initializing {} Optimizer".format(args.optimizer)) as block:
         kwargs = tools.kwargs_from_args(args, 'optimizer')
         if args.fp16:
@@ -265,7 +265,7 @@ if __name__ == '__main__':
 
             optimizer.zero_grad() if not is_validate else None
             losses = model(data[0], target[0])
-            losses = [torch.mean(loss_value) for loss_value in losses] 
+            losses = [torch.mean(loss_value) for loss_value in losses]
             loss_val = losses[0] # Collect first loss for weight update
             total_loss += loss_val.item()
             loss_values = [v.item() for v in losses]
@@ -341,16 +341,15 @@ if __name__ == '__main__':
     def inference(args, epoch, data_loader, model, offset=0):
 
         model.eval()
-        
+
         if args.save_flow or args.render_validation:
             flow_folder = "{}/inference/{}.epoch-{}-flow-field".format(args.save,args.name.replace('/', '.'),epoch)
             if not os.path.exists(flow_folder):
                 os.makedirs(flow_folder)
 
-        
-        args.inference_n_batches = np.inf if args.inference_n_batches < 0 else args.inference_n_batches
 
-        progress = tqdm(data_loader, ncols=100, total=np.minimum(len(data_loader), args.inference_n_batches), desc='Inferencing ', 
+        args.inference_n_batches = np.inf if args.inference_n_batches < 0 else args.inference_n_batches
+        progress = tqdm(data_loader, ncols=100, total=np.minimum(len(data_loader), args.inference_n_batches), desc='Inferencing ',
             leave=True, position=offset)
 
         statistics = []
@@ -360,13 +359,13 @@ if __name__ == '__main__':
                 data, target = [d.cuda(async=True) for d in data], [t.cuda(async=True) for t in target]
             data, target = [Variable(d) for d in data], [Variable(t) for t in target]
 
-            # when ground-truth flows are not available for inference_dataset, 
-            # the targets are set to all zeros. thus, losses are actually L1 or L2 norms of compute optical flows, 
+            # when ground-truth flows are not available for inference_dataset,
+            # the targets are set to all zeros. thus, losses are actually L1 or L2 norms of compute optical flows,
             # depending on the type of loss norm passed in
             with torch.no_grad():
                 losses, output = model(data[0], target[0], inference=True)
 
-            losses = [torch.mean(loss_value) for loss_value in losses] 
+            losses = [torch.mean(loss_value) for loss_value in losses]
             loss_val = losses[0] # Collect first loss for weight update
             total_loss += loss_val.item()
             loss_values = [v.item() for v in losses]
@@ -377,9 +376,9 @@ if __name__ == '__main__':
             statistics.append(loss_values)
             # import IPython; IPython.embed()
             if args.save_flow or args.render_validation:
-                for i in range(args.inference_batch_size):
+                for i in range(args.effective_inference_batch_size):
                     _pflow = output[i].data.cpu().numpy().transpose(1, 2, 0)
-                    flow_utils.writeFlow( join(flow_folder, '%06d.flo'%(batch_idx * args.inference_batch_size + i)),  _pflow)
+                    flow_utils.writeFlow( join(flow_folder, '%06d.flo'%(batch_idx * args.effective_inference_batch_size + i)),  _pflow)
 
             progress.set_description('Inference Averages for Epoch {}: '.format(epoch) + tools.format_dictionary_of_losses(loss_labels, np.array(statistics).mean(axis=0)))
             progress.update(1)
@@ -416,7 +415,7 @@ if __name__ == '__main__':
             tools.save_checkpoint({   'arch' : args.model,
                                       'epoch': epoch,
                                       'state_dict': model_and_loss.module.model.state_dict(),
-                                      'best_EPE': best_err}, 
+                                      'best_EPE': best_err},
                                       is_best, args.save, args.model)
             checkpoint_progress.update(1)
             checkpoint_progress.close()
@@ -433,7 +432,7 @@ if __name__ == '__main__':
                 tools.save_checkpoint({   'arch' : args.model,
                                           'epoch': epoch,
                                           'state_dict': model_and_loss.module.model.state_dict(),
-                                          'best_EPE': train_loss}, 
+                                          'best_EPE': train_loss},
                                           False, args.save, args.model, filename = 'train-checkpoint.pth.tar')
                 checkpoint_progress.update(1)
                 checkpoint_progress.close()
@@ -442,3 +441,25 @@ if __name__ == '__main__':
         train_logger.add_scalar('seconds per epoch', progress._time() - last_epoch_time, epoch)
         last_epoch_time = progress._time()
     print("\n")
+
+    if args.inference and args.save_flow:
+        # modify saved results
+        flow_folder = "{}/inference/{}.epoch-0-flow-field".format(args.save,args.name.replace('/', '.'))
+        flow_images = [os.path.join(flow_folder, img) for img in os.listdir(flow_folder)]
+        output_folder = args.save
+        to_remove = [os.path.join(output_folder, item) for item in os.listdir(output_folder)]
+        input_images = [img[0] for img in inference_dataset.image_list]
+        assert len(input_images) == len(flow_images), \
+            "something went wrong, there are not as many outputs as sequential image pairs."
+        output_images = [os.path.splitext(os.path.basename(img))[0] +
+                         '_feature-flow.flo' for img in input_images]
+        output_images = [os.path.join(args.save, img) for img in output_images]
+        for temp, out in zip(flow_images, output_images):
+            shutil.move(temp, out)
+        for garbage in to_remove:
+            if os.path.isdir(garbage):
+                shutil.rmtree(garbage)
+            elif os.path.basename(garbage) == 'args.txt':
+                os.remove(garbage)
+            else:
+                print('unexpected file already existed in output directory: %s' % garbage)

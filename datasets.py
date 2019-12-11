@@ -318,7 +318,7 @@ class ChairsSDHomTest(ChairsSDHom):
         super(ChairsSDHomTest, self).__init__(args, is_cropped = is_cropped, root = root, dstype = 'test', replicates = replicates)
 
 class ImagesFromFolder(data.Dataset):
-  def __init__(self, args, is_cropped, root = '/path/to/frames/only/folder', iext = 'png', replicates = 1):
+  def __init__(self, args, is_cropped, root = '/path/to/frames/only/folder', iext = 'jpg', replicates = 1):
     self.args = args
     self.is_cropped = is_cropped
     self.crop_size = args.crop_size
@@ -333,6 +333,8 @@ class ImagesFromFolder(data.Dataset):
         self.image_list += [ [ im1, im2 ] ]
 
     self.size = len(self.image_list)
+    print('number of image pairs found: %s' % self.size)
+    print('length is %s ' % self.replicates)
 
     self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
 
@@ -355,7 +357,7 @@ class ImagesFromFolder(data.Dataset):
     else:
         cropper = StaticCenterCrop(image_size, self.render_size)
     images = list(map(cropper, images))
-    
+
     images = np.array(images).transpose(3,0,1,2)
     images = torch.from_numpy(images.astype(np.float32))
 

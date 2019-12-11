@@ -18,6 +18,10 @@ for SUBDIRECTORY in ${SUBDIRECTORIES}; do
     NEWDIRECTORY="${SUBDIRECTORY}_feature-flow"
     INPUT="${DATA_FOLDER}"/"${SUBDIRECTORY}"
     OUTPUT="${OUTPUT_FOLDER}"/"${NEWDIRECTORY}"
+    if [ -d "${OUTPUT}" ]; then
+        echo already exists: "${OUTPUT}"
+        continue
+    fi
     mkdir -p "${OUTPUT}"
 
     python main.py \
