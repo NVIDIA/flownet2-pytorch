@@ -13,7 +13,7 @@ from .submodules import *
 'Parameter count : 38,676,504 '
 
 class FlowNetS(nn.Module):
-    def __init__(self, args, input_channels = 12, batchNorm=True):
+    def __init__(self, input_channels = 12, batchNorm=True):
         super(FlowNetS,self).__init__()
 
         self.batchNorm = batchNorm

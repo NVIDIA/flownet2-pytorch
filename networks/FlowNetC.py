@@ -11,7 +11,7 @@ from .submodules import *
 'Parameter count , 39,175,298 '
 
 class FlowNetC(nn.Module):
-    def __init__(self,args, batchNorm=True, div_flow = 20):
+    def __init__(self, fp16=False, batchNorm=True, div_flow = 20):
         super(FlowNetC,self).__init__()
 
         self.batchNorm = batchNorm
@@ -22,7 +22,7 @@ class FlowNetC(nn.Module):
         self.conv3   = conv(self.batchNorm, 128,  256, kernel_size=5, stride=2)
         self.conv_redir  = conv(self.batchNorm, 256,   32, kernel_size=1, stride=1)
 
-        if args.fp16:
+        if fp16:
             self.corr = nn.Sequential(
                 tofp32(),
                 Correlation(pad_size=20, kernel_size=1, max_displacement=20, stride1=1, stride2=2, corr_multiply=1),

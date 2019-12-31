@@ -9,7 +9,7 @@ from .submodules import *
 'Parameter count = 45,371,666'
 
 class FlowNetSD(nn.Module):
-    def __init__(self, args, batchNorm=True):
+    def __init__(self, batchNorm=True):
         super(FlowNetSD,self).__init__()
 
         self.batchNorm = batchNorm

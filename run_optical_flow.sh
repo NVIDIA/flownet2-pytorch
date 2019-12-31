@@ -2,7 +2,7 @@
 INPUT_FOLDER="${1}"
 OUTPUT_FOLDER="${2}"
 
-sudo nvidia-docker build -t flownet2-pytorch:flow_runner .
+sudo nvidia-docker build -t flownet2-pytorch:genflow .
 
 if [ -z "${OUTPUT_FOLDER}" ]; then
   sudo nvidia-docker run --rm -ti \

@@ -376,7 +376,7 @@ if __name__ == '__main__':
             statistics.append(loss_values)
             # import IPython; IPython.embed()
             if args.save_flow or args.render_validation:
-                for i in range(args.effective_inference_batch_size):
+                for i in range(output.shape[0]):
                     _pflow = output[i].data.cpu().numpy().transpose(1, 2, 0)
                     flow_utils.writeFlow( join(flow_folder, '%06d.flo'%(batch_idx * args.effective_inference_batch_size + i)),  _pflow)
 
@@ -450,7 +450,7 @@ if __name__ == '__main__':
         to_remove = [os.path.join(output_folder, item) for item in os.listdir(output_folder)]
         input_images = [img[0] for img in inference_dataset.image_list]
         assert len(input_images) == len(flow_images), \
-            "something went wrong, there are not as many outputs as sequential image pairs."
+            "something went wrong, there are not as many outputs as sequential image pairs. %s %s" % (input_images, flow_images)
         output_images = [os.path.splitext(os.path.basename(img))[0] +
                          '_feature-flow.flo' for img in input_images]
         output_images = [os.path.join(args.save, img) for img in output_images]
