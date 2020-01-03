@@ -33,9 +33,9 @@ class Resample2dFunction(Function):
 
         resample2d_cuda.backward(input1, input2, grad_output.data,
                                  grad_input1.data, grad_input2.data,
-                                 ctx.kernel_size)
+                                 ctx.kernel_size, ctx.bilinear)
 
-        return grad_input1, grad_input2, None
+        return grad_input1, grad_input2, None, None
 
 class Resample2d(Module):
 
