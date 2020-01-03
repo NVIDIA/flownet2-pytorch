@@ -10,5 +10,4 @@ python scripts/download_models_flownet2.py
 
 set -euo pipefail
 
-python inference.py "${INPUT_FOLDER}" "${@:2}"
-
+python -W ignore::UserWarning inference.py "${INPUT_FOLDER}" "${@:2}"

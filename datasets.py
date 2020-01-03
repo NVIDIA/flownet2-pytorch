@@ -26,17 +26,47 @@ class ImagesFromFolder(data.Dataset):
         self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
         self.input_size = (256, 256)  # could make this more flexible
 
-        self.transforms = tvt.Compose(
-            [tvt.Resize(self.input_size), # or center crop
-             tvt.ToTensor()]
-        )
+        xfm = tvt.Resize(self.input_size) if resample else tvt.CenterCrop(self.input_size)
+
+        self.transforms = tvt.Compose([xfm, tvt.ToTensor()])
 
     def __getitem__(self, index):
         img0 = Image.open(self.image_list[index][0])
         img1 = Image.open(self.image_list[index][1])
-        images = torch.stack(list(map(self.transforms, [img0, img1])), dim=0)
-
+        images = torch.stack(list(map(self.transforms, [img0, img1])), dim=1)
         return [images], [torch.zeros(images.size()[0:1] + (2,) + images.size()[-2:])]
+
+    def __len__(self):
+        return self.size
+
+
+class ImagesFromSubFolders(data.Dataset):
+    def __init__(self, root, iext='jpg', resample=True, crop=False, match_original_size=False):
+        self.image_list = []
+        for folder in os.listdir(root):
+            images = sorted( glob( os.path.join(root, folder, '*.' + iext) ) )
+            for i in range(len(images)-1):
+                im1 = images[i]
+                im2 = images[i+1]
+                self.image_list += [ [ im1, im2 ] ]
+
+        self.size = len(self.image_list)
+        assert self.size, "attempted to read an empty folder for flow at %s"  % root
+        print('setting up %s' % root)
+        print('number of image pairs found: %s' % self.size)
+
+        self.frame_size = frame_utils.read_gen(self.image_list[0][0]).shape
+        self.input_size = (256, 256)  # could make this more flexible
+
+        xfm = tvt.Resize(self.input_size) if resample else tvt.CenterCrop(self.input_size)
+
+        self.transforms = tvt.Compose([xfm, tvt.ToTensor()])
+
+    def __getitem__(self, index):
+        img0 = Image.open(self.image_list[index][0])
+        img1 = Image.open(self.image_list[index][1])
+        images = torch.stack(list(map(self.transforms, [img0, img1])), dim=1)
+        return [images], self.image_list[index][0]
 
     def __len__(self):
         return self.size

@@ -379,6 +379,8 @@ class FlowNet2CS(nn.Module):
                 # init_deconv_bilinear(m.weight)
 
     def forward(self, inputs):
+        print('Flownet model')
+        print(inputs.shape)
         rgb_mean = inputs.contiguous().view(inputs.size()[:2]+(-1,)).mean(dim=-1).view(inputs.size()[:2] + (1,1,1,))
 
         x = (inputs - rgb_mean) / self.rgb_max
