@@ -1,6 +1,6 @@
 import numpy as np
 from os.path import *
-from scipy.misc import imread
+from imageio import imread
 from . import flow_utils 
 
 def read_gen(file_name):
