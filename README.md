@@ -48,7 +48,7 @@ L1 and L2 losses with multi-scale support are available in [losses.py](./losses.
 Currently, the code supports python 3
 * numpy 
 * PyTorch ( == 0.4.1, for <= 0.4.0 see branch [python36-PyTorch0.4](https://github.com/NVIDIA/flownet2-pytorch/tree/python36-PyTorch0.4))
-* scipy 
+* imageio
 * scikit-image
 * tensorboardX
 * colorama, tqdm, setproctitle 
