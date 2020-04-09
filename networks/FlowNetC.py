@@ -69,6 +69,7 @@ class FlowNetC(nn.Module):
         self.upsample1 = nn.Upsample(scale_factor=4, mode='bilinear')
 
     def forward(self, x):
+        from pdb import set_trace
         x1 = x[:,0:3,:,:]
         x2 = x[:,3::,:,:]
 
