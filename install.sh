@@ -11,4 +11,8 @@ cd ../channelnorm_package
 rm -rf *_cuda.egg-info build dist __pycache__
 python3 setup.py install --user
 
+cd ../correlation_cpp_package
+rm -rf *_cuda.egg-info build dist __pycache__
+python3 setup.py install --user
+
 cd ..
