@@ -6,8 +6,13 @@ import math
 import numpy as np
 
 try:
-    from networks.resample2d_package.resample2d import Resample2d
-    from networks.channelnorm_package.channelnorm import ChannelNorm
+    # from networks.resample2d_package.resample2d import Resample2d
+    # from networks.channelnorm_package.channelnorm import ChannelNorm
+    # PyTorch versions
+    # To use the CPU implementation of Resample2D and Channelnorm uncomment the 
+    # two lines below and comment the two lines above.
+    from networks.channelnorm import ChannelNorm
+    from networks.resample2d import Resample2d
 
     from networks import FlowNetC
     from networks import FlowNetS
@@ -16,9 +21,14 @@ try:
 
     from networks.submodules import *
 except:
-    from .networks.resample2d_package.resample2d import Resample2d
-    from .networks.channelnorm_package.channelnorm import ChannelNorm
-
+    # from .networks.resample2d_package.resample2d import Resample2d
+    # from .networks.channelnorm_package.channelnorm import ChannelNorm
+    # PyTorch versions
+    # To use the CPU implementation of Resample2D and Channelnorm uncomment the 
+    # two lines below and comment the two lines above.
+    from .networks.channelnorm import ChannelNorm
+    from .networks.resample2d import Resample2d
+    
     from .networks import FlowNetC
     from .networks import FlowNetS
     from .networks import FlowNetSD
