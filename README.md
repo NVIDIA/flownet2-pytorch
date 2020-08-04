@@ -47,11 +47,11 @@ L1 and L2 losses with multi-scale support are available in [losses.py](./losses.
 ### Python requirements 
 Currently, the code supports python 3
 * numpy 
-* PyTorch ( == 0.4.1, for <= 0.4.0 see branch [python36-PyTorch0.4](https://github.com/NVIDIA/flownet2-pytorch/tree/python36-PyTorch0.4))
-* scipy 
+* PyTorch 1.0.1 with CUDA 10: `conda install pytorch==1.0.1 torchvision==0.2.2 cudatoolkit=10.0 -c pytorch`
+* scipy 1.2.1 
 * scikit-image
 * tensorboardX
-* colorama, tqdm, setproctitle 
+* colorama, tqdm, setproctitle, pytz
 
 ## Converted Caffe Pre-trained Models
 We've included caffe pre-trained models. Should you use these pre-trained weights, please adhere to the [license agreements](https://drive.google.com/file/d/1TVv0BnNFh3rpHZvD-easMb9jYrPE2Eqd/view?usp=sharing). 
