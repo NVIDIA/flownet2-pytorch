@@ -5,3 +5,6 @@ _ext
 work
 work/*
 _ext/
+build/
+dist/
+*.egg_info
