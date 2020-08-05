@@ -1,5 +1,6 @@
 import torch
 import torch.utils.data as data
+import torchvision
 
 import os, math, random
 from os.path import *
@@ -364,6 +365,44 @@ class ImagesFromFolder(data.Dataset):
   def __len__(self):
     return self.size * self.replicates
 
+class ImageFolderWithPaths(torchvision.datasets.ImageFolder):
+    """Custom dataset that includes image file paths. Extends
+    torchvision.datasets.ImageFolder
+
+    Inspired by https://gist.github.com/andrewjong/6b02ff237533b3b2c554701fb53d5c4d
+    """
+
+    # override the __getitem__ method. this is the method that dataloader calls
+    def __getitem__(self, index):
+        # this is what ImageFolder normally returns
+        image_1, label_1 = super(ImageFolderWithPaths, self).__getitem__(index)
+        image_2, label_2 = super(ImageFolderWithPaths, self).__getitem__(index + 1)
+        images = [image_1, image_2]
+        labels = [label_1, label_2]
+        # the image file path
+        paths = self.imgs[index][0], self.imgs[index + 1][0]
+        return images, labels, paths
+
+    def __len__(self):
+        return super(ImageFolderWithPaths, self).__len__() - 1
+
+# Example Usage for VVT_ImageFolderWithPaths for train frames
+data_dir = "/data_hdd/fw_gan_vvt/train/train_frames"
+transforms = torchvision.transforms.Compose([
+    torchvision.transforms.ToTensor(),
+    torchvision.transforms.Normalize([0.5], [0.5])
+])
+dataset = ImageFolderWithPaths(data_dir, transform=transforms) # our custom dataset
+dataloader = torch.utils.data.DataLoader(dataset)
+
+# iterate over data
+inputs, labels, paths = [], [], []
+for input, label, path in dataloader:
+    # use the above variables freely
+    print(input, label, path)
+    image1, image2 = input
+    label1, label2 = label
+    path1, path2 = path
 '''
 import argparse
 import sys, os
