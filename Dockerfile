@@ -5,7 +5,7 @@ MAINTAINER hirakawat
 # basic packages
 RUN apt-get -y update && apt-get -y upgrade && \
         apt-get install -y sudo cmake g++ gfortran \
-        libhdf5-dev pkg-config build-essential \
+        libhdf5-dev pkg-config libffi-dev build-essential \
         wget curl git htop tmux vim ffmpeg rsync openssh-server \
         python3 python3-dev libpython3-dev && \
         apt-get -y autoremove && apt-get -y clean && apt-get -y autoclean && \
@@ -20,7 +20,7 @@ ENV LIBRARY_PATH /usr/local/nvidia/lib64:/usr/local/nvidia/lib:/usr/local/cuda/l
 
 
 # python3 modules
-RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && \
+RUN wget https://bootstrap.pypa.io/pip/3.5/get-pip.py && python3 get-pip.py && \
         pip3 install --upgrade --no-cache-dir wheel six setuptools cython numpy scipy==1.2.0 \
                 matplotlib seaborn scikit-learn scikit-image pillow requests \
                 jupyterlab networkx h5py pandas plotly protobuf tqdm tensorboardX colorama setproctitle && \
