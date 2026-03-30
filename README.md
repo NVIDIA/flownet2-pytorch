@@ -54,15 +54,15 @@ Currently, the code supports python 3
 * colorama, tqdm, setproctitle 
 
 ## Converted Caffe Pre-trained Models
-We've included caffe pre-trained models. Should you use these pre-trained weights, please adhere to the [license agreements](https://drive.google.com/file/d/1TVv0BnNFh3rpHZvD-easMb9jYrPE2Eqd/view?usp=sharing). 
+We've included caffe pre-trained models. Should you use these pre-trained weights, please adhere to the [license agreements](https://drive.google.com/file/d/1R5byo1qLKAFfkPRTM_Ozc8xQoYX7Igv4/view?usp=drive_link). 
 
-* [FlowNet2](https://drive.google.com/file/d/1hF8vS6YeHkx3j2pfCeQqqZGwA_PJq_Da/view?usp=sharing)[620MB]
-* [FlowNet2-C](https://drive.google.com/file/d/1BFT6b7KgKJC8rA59RmOVAXRM_S7aSfKE/view?usp=sharing)[149MB]
-* [FlowNet2-CS](https://drive.google.com/file/d/1iBJ1_o7PloaINpa8m7u_7TsLCX0Dt_jS/view?usp=sharing)[297MB]
-* [FlowNet2-CSS](https://drive.google.com/file/d/157zuzVf4YMN6ABAQgZc8rRmR5cgWzSu8/view?usp=sharing)[445MB]
-* [FlowNet2-CSS-ft-sd](https://drive.google.com/file/d/1R5xafCIzJCXc8ia4TGfC65irmTNiMg6u/view?usp=sharing)[445MB]
-* [FlowNet2-S](https://drive.google.com/file/d/1V61dZjFomwlynwlYklJHC-TLfdFom3Lg/view?usp=sharing)[148MB]
-* [FlowNet2-SD](https://drive.google.com/file/d/1QW03eyYG_vD-dT-Mx4wopYvtPu_msTKn/view?usp=sharing)[173MB]
+* [FlowNet2](https://drive.google.com/file/d/1LLYdnObBYzs7rDYYUCGscuC2nwO7y85I/view?usp=drive_link)[620MB]
+* [FlowNet2-C](https://drive.google.com/file/d/1elgK52N4EQVi5ywN2Ky4qWvweLh8RE2U/view?usp=drive_link)[149MB]
+* [FlowNet2-CS](https://drive.google.com/file/d/1KyGXiQCiokoMpIFqOYbfA-I3MDU-FsnV/view?usp=drive_link)[297MB]
+* [FlowNet2-CSS](https://drive.google.com/file/d/17FQOz8ec2pXBOiV4zqnkVwjRRyUyymQY/view?usp=drive_link)[445MB]
+* [FlowNet2-CSS-ft-sd](https://drive.google.com/file/d/1AKt20xmjh2Y3Rb-GO5bLs9Ux1tu2AVAt/view?usp=drive_link)[445MB]
+* [FlowNet2-S](https://drive.google.com/file/d/1FAjmmNMCzKH9PidATQSOX-Z1NHbvg0mK/view?usp=drive_link)[148MB]
+* [FlowNet2-SD](https://drive.google.com/file/d/1QiT0bxXF04qLWc3ml0kPPlwmHwp24r75/view?usp=drive_link)[173MB]
     
 ## Inference
     # Example on MPISintel Clean   
