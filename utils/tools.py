@@ -48,9 +48,8 @@ class TimerBlock:
         print(("  [{:.3f}{}] {}".format(duration, units, string)))
     
     def log2file(self, fid, string):
-        fid = open(fid, 'a')
-        fid.write("%s\n"%(string))
-        fid.close()
+        with open(fid, 'a') as fid:
+            fid.write("%s\n"%(string))
 
 def add_arguments_for_module(parser, module, argument_for_class, default, skip_params=[], parameter_defaults={}):
     argument_group = parser.add_argument_group(argument_for_class.capitalize())

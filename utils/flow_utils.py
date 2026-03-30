@@ -44,17 +44,16 @@ def writeFlow(filename,uv,v=None):
 
     assert(u.shape == v.shape)
     height,width = u.shape
-    f = open(filename,'wb')
-    # write the header
-    f.write(TAG_CHAR)
-    np.array(width).astype(np.int32).tofile(f)
-    np.array(height).astype(np.int32).tofile(f)
-    # arrange into matrix form
-    tmp = np.zeros((height, width*nBands))
-    tmp[:,np.arange(width)*2] = u
-    tmp[:,np.arange(width)*2 + 1] = v
-    tmp.astype(np.float32).tofile(f)
-    f.close()
+    with open(filename,'wb') as f:
+        # write the header
+        f.write(TAG_CHAR)
+        np.array(width).astype(np.int32).tofile(f)
+        np.array(height).astype(np.int32).tofile(f)
+        # arrange into matrix form
+        tmp = np.zeros((height, width*nBands))
+        tmp[:,np.arange(width)*2] = u
+        tmp[:,np.arange(width)*2 + 1] = v
+        tmp.astype(np.float32).tofile(f)
 
 
 # ref: https://github.com/sampepose/flownet2-tf/

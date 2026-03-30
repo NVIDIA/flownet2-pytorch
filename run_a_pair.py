@@ -32,13 +32,12 @@ if __name__ == '__main__':
 
     # save flow, I reference the code in scripts/run-flownet.py in flownet2-caffe project
     def writeFlow(name, flow):
-        f = open(name, 'wb')
-        f.write('PIEH'.encode('utf-8'))
-        np.array([flow.shape[1], flow.shape[0]], dtype=np.int32).tofile(f)
-        flow = flow.astype(np.float32)
-        flow.tofile(f)
-        f.flush()
-        f.close()
+        with open(name, 'wb') as f:
+            f.write('PIEH'.encode('utf-8'))
+            np.array([flow.shape[1], flow.shape[0]], dtype=np.int32).tofile(f)
+            flow = flow.astype(np.float32)
+            flow.tofile(f)
+            f.flush()
 
 
     data = result.data.cpu().numpy().transpose(1, 2, 0)
