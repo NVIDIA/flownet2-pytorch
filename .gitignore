@@ -5,3 +5,4 @@ _ext
 work
 work/*
 _ext/
+model_weights
